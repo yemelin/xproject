@@ -13,14 +13,13 @@ func main() {
 	router := fasthttprouter.New()
 	apiPrefix := "/api/v1"
 
-	// TODO: Define the method to serve static files
-	router.GET(apiPrefix, h.GetSwaggerSpecs)
+	router.GET(apiPrefix, h.GetSwaggerSpec)
 
 	router.GET(apiPrefix+"/instance", h.GetAllInstances)
 
-	router.POST(apiPrefix+"/instance/", h.CreateInstance)
-	router.GET(apiPrefix+"/instance/:id", h.GetInstancesById)
-	router.DELETE(apiPrefix+"/instance/:id", h.DeleteInstanceById)
+	router.GET(apiPrefix+"/instance/:id", h.GetInstancesByID)
+	router.DELETE(apiPrefix+"/instance/:id", h.DeleteInstanceByID)
+	router.GET(apiPrefix+"/instance/:id/history", h.GetInstanceHistoryByID)
 
 	log.Println("service is started")
 
