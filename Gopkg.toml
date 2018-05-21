@@ -25,6 +25,14 @@
 #   unused-packages = true
 
 
+[[constraint]]
+  name = "github.com/buaazp/fasthttprouter"
+  version = "0.1.1"
+
+[[constraint]]
+  name = "github.com/valyala/fasthttp"
+  revision = "e5f51c11919d4f66400334047b897ef0a94c6f3c"
+
 [prune]
   go-tests = true
   unused-packages = true

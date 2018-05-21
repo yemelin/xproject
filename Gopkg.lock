@@ -30,17 +30,23 @@
   version = "v1.1"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/valyala/bytebufferpool"
+  packages = ["."]
+  revision = "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7"
+
+[[projects]]
   name = "github.com/valyala/fasthttp"
   packages = [
     ".",
-    "fasthttputil"
+    "fasthttputil",
+    "stackless"
   ]
-  revision = "d42167fd04f636e20b005e9934159e95454233c7"
-  version = "v20160617"
+  revision = "e5f51c11919d4f66400334047b897ef0a94c6f3c"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9faa949f534a8cc0e4570ba1ad7523511001c9cc0a982bec1327b11598c71b71"
+  inputs-digest = "cafa811ae84988ed51af09994e8865763e247b2ad0660e5fd13435512875c178"
   solver-name = "gps-cdcl"
   solver-version = 1
