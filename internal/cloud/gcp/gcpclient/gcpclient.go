@@ -3,14 +3,21 @@ package gcpclient
 import (
 	"fmt"
 	"log"
+	"strings"
+	"time"
 
 	"cloud.google.com/go/storage"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
 )
 
-// Template?
-func GetProjectBuckets(ctx context.Context, client *storage.Client,
+type Object struct {
+	Name    string
+	Created time.Time
+}
+
+// TODO: testing
+func FetchProjectBuckets(ctx context.Context, client *storage.Client,
 	projectID string) (buckets []string) {
 
 	it := client.Buckets(ctx, projectID)
@@ -29,8 +36,9 @@ func GetProjectBuckets(ctx context.Context, client *storage.Client,
 	return buckets
 }
 
-func GetBucketObjects(ctx context.Context, client *storage.Client,
-	bucketName string) (objects []string) {
+// TODO: testing
+func FetchBucketObjects(ctx context.Context, client *storage.Client,
+	bucketName string) (objects []Object) {
 
 	it := client.Bucket(bucketName).Objects(ctx, nil)
 	for {
@@ -42,11 +50,37 @@ func GetBucketObjects(ctx context.Context, client *storage.Client,
 			log.Println("GetBucketObjects() failed")
 			return
 		}
-		fmt.Println(o.Name, o.Created)
-		objects = append(objects, o.Name)
+		fmt.Println(o.Name, o.Created) // FIXME: cut
+		objects = append(objects, Object{o.Name, o.Created})
 	}
 
 	return objects
+}
+
+// FIXME: delete from slice or insert into new slice?
+func SelectObjectsWithPrefix(objects []Object, prefix string) []Object {
+	for i, o := range objects {
+		if !strings.HasPrefix(o.Name, prefix) {
+			objects = append(objects[:i], objects[i+1:]...) // FIXME: memory and order problem?
+		}
+	}
+	fmt.Println(objects) // FIXME: cut
+
+	return objects
+}
+
+// FIXME: delete from slice or insert into new slice?
+func SelectObjectsWithFromToTime(objects []Object, from, to time.Time) (result []Object) {
+	if to.Before(from) {
+		log.Fatalln("SelectObjectsWithFromToTime", "to < from")
+	}
+	for _, o := range objects {
+		if o.Created.After(from) && o.Created.Before(to) {
+			result = append(result, o)
+		}
+	}
+
+	return result
 }
 
 // func ()  {
