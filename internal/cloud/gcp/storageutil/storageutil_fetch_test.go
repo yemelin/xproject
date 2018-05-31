@@ -2,34 +2,35 @@ package storageutil
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
 	"cloud.google.com/go/storage"
 )
 
-// func TestFetchProjectBuckets(t *testing.T) {
-// 	ctx := context.Background()
-// 	projectID := os.Getenv("APP_PROJECT_ID")
-// 	client, err := storage.NewClient(ctx)
-// 	if err != nil {
-// 		t.Error("Failed to create client:", err)
-// 	}
-//
-// 	resBuckets := FetchProjectBuckets(ctx, client, projectID)
-//
-// 	expBuckets := []string{"churomann-bucket", "churomann-bucket-2"}
-// 	if !IsStringSlicesEqual(resBuckets, expBuckets) {
-// 		t.Error("IsStringSlicesEqual\nresult:", resBuckets, "\nexpected:", expBuckets)
-// 	}
-// }
+func TestFetchProjectBuckets(t *testing.T) {
+	ctx := context.Background()
+	projectID := os.Getenv("APP_PROJECT_ID")
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		t.Error("Failed to create client:", err)
+	}
 
-func IsStringSlicesEqual(sl1 []string, sl2 []string) bool {
+	resBuckets := FetchProjectBuckets(ctx, client, projectID)
+
+	expBuckets := []string{"churomann-bucket", "churomann-bucket-2"}
+	if !isStringSlicesEqual(resBuckets, expBuckets) {
+		t.Error("IsStringSlicesEqual\nresult:", resBuckets, "\nexpected:", expBuckets)
+	}
+}
+
+func isStringSlicesEqual(sl1 []string, sl2 []string) bool {
 	if len(sl1) != len(sl2) {
 		return false
 	}
 	for _, s := range sl2 {
-		if !IsStringSliceContains(sl1, s) {
+		if !isStringSliceContains(sl1, s) {
 			return false
 		}
 	}
@@ -37,7 +38,7 @@ func IsStringSlicesEqual(sl1 []string, sl2 []string) bool {
 }
 
 // IDEA: generic?
-func IsStringSliceContains(sl []string, str string) bool {
+func isStringSliceContains(sl []string, str string) bool {
 	for _, s := range sl {
 		if s == str {
 			return true
@@ -57,17 +58,17 @@ func TestFetchBucketObjects(t *testing.T) {
 	resObjects := FetchBucketObjects(ctx, client, "churomann-bucket-2")
 
 	expObjects := []Object{Object{"test1", time.Time{}}, Object{"test2", time.Time{}}}
-	if !IsObjectSlicesEqual(resObjects, expObjects) {
+	if !isObjectSlicesEqual(resObjects, expObjects) {
 		t.Error("IsStringSlicesEqual\nresult:", resObjects, "\nexpected:", expObjects)
 	}
 }
 
-func IsObjectSlicesEqual(sl1 []Object, sl2 []Object) bool {
+func isObjectSlicesEqual(sl1 []Object, sl2 []Object) bool {
 	if len(sl1) != len(sl2) {
 		return false
 	}
 	for _, o := range sl2 {
-		if !IsObjectSliceContains(sl1, o) {
+		if !isObjectSliceContains(sl1, o) {
 			return false
 		}
 	}
@@ -75,7 +76,7 @@ func IsObjectSlicesEqual(sl1 []Object, sl2 []Object) bool {
 }
 
 // IDEA: generic?
-func IsObjectSliceContains(sl []Object, obj Object) bool {
+func isObjectSliceContains(sl []Object, obj Object) bool {
 	for _, o := range sl {
 		if o.Name == obj.Name {
 			return true
