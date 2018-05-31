@@ -2,28 +2,27 @@ package storageutil
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
 	"cloud.google.com/go/storage"
 )
 
-func TestFetchProjectBuckets(t *testing.T) {
-	ctx := context.Background()
-	projectID := os.Getenv("APP_PROJECT_ID")
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		t.Error("Failed to create client:", err)
-	}
-
-	resBuckets := FetchProjectBuckets(ctx, client, projectID)
-
-	expBuckets := []string{"churomann-bucket", "churomann-bucket-2"}
-	if !IsStringSlicesEqual(resBuckets, expBuckets) {
-		t.Error("IsStringSlicesEqual\nresult:", resBuckets, "\nexpected:", expBuckets)
-	}
-}
+// func TestFetchProjectBuckets(t *testing.T) {
+// 	ctx := context.Background()
+// 	projectID := os.Getenv("APP_PROJECT_ID")
+// 	client, err := storage.NewClient(ctx)
+// 	if err != nil {
+// 		t.Error("Failed to create client:", err)
+// 	}
+//
+// 	resBuckets := FetchProjectBuckets(ctx, client, projectID)
+//
+// 	expBuckets := []string{"churomann-bucket", "churomann-bucket-2"}
+// 	if !IsStringSlicesEqual(resBuckets, expBuckets) {
+// 		t.Error("IsStringSlicesEqual\nresult:", resBuckets, "\nexpected:", expBuckets)
+// 	}
+// }
 
 func IsStringSlicesEqual(sl1 []string, sl2 []string) bool {
 	if len(sl1) != len(sl2) {

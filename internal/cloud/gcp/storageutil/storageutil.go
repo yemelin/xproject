@@ -1,6 +1,7 @@
 package storageutil
 
 import (
+	"encoding/csv"
 	"errors"
 	"log"
 	"strings"
@@ -15,6 +16,8 @@ type Object struct {
 	Name    string
 	Created time.Time
 }
+
+// FIXME: One client or every time new client?
 
 // TODO: testing (need test api?)
 func FetchProjectBuckets(ctx context.Context, client *storage.Client,
@@ -55,6 +58,17 @@ func FetchBucketObjects(ctx context.Context, client *storage.Client,
 	return objects
 }
 
+// TODO: testing
+func NewBucketObjectReader(ctx context.Context, client *storage.Client,
+	bucketName, objectName string) *csv.Reader {
+	objectReader, err := client.Bucket(bucketName).Object(objectName).NewReader(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return csv.NewReader(objectReader) // TODO:  have no closed yet
+}
+
 // FIXME: delete from slice or insert into new slice?
 func SelectObjectsWithPrefix(objects []Object, prefix string) []Object {
 	for i, o := range objects {
@@ -79,42 +93,3 @@ func SelectObjectsWithFromToTime(objects []Object, from, to time.Time) (result [
 
 	return result, nil
 }
-
-// func ()  {
-//
-// }
-
-// func ()  {
-//
-// }
-
-// func main() {
-// 	ctx := context.Background()
-//
-// 	// Sets your Google Cloud Platform project ID.
-// 	projectID := os.Getenv("APP_PROJECT_ID")
-//
-// 	// Creates a client.
-// 	client, err := storage.NewClient(ctx)
-// 	if err != nil {
-// 		log.Fatalf("Failed to create client: %v", err)
-// 	}
-//
-// 	bucket, err := client.Buckets(ctx, projectID).Next()
-// 	if err != nil {
-// 		log.Fatal("fatal")
-// 	}
-//
-// 	rc, err := client.Bucket(bucket.Name).Object("test-2018-05-23.csv").NewReader(ctx)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	defer rc.Close()
-//
-// 	csvReader := csv.NewReader(rc)
-// 	res, err := csvReader.ReadAll()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	fmt.Println(res[1][0])
-// }
