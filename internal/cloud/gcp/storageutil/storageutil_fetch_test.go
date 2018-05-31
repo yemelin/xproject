@@ -57,7 +57,9 @@ func TestFetchBucketObjects(t *testing.T) {
 
 	resObjects := FetchBucketObjects(ctx, client, "churomann-bucket-2")
 
-	expObjects := []Object{Object{"test1", time.Time{}}, Object{"test2", time.Time{}}}
+	expObjects := []Object{
+		Object{"test1", "churomann-bucket-2", time.Time{}},
+		Object{"test2", "churomann-bucket-2", time.Time{}}}
 	if !isObjectSlicesEqual(resObjects, expObjects) {
 		t.Error("IsStringSlicesEqual\nresult:", resObjects, "\nexpected:", expObjects)
 	}

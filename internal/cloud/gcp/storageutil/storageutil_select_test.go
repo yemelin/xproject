@@ -7,14 +7,14 @@ import (
 
 func TestSelectWithPrefix(t *testing.T) {
 	objects := Objects{
-		Object{"obj-1", time.Time{}},
-		Object{"obj_2", time.Time{}},
-		Object{"obj-3", time.Time{}},
+		Object{Name: "obj-1"},
+		Object{Name: "obj_2"},
+		Object{Name: "obj-3"},
 	}
 
 	expObjects := Objects{
-		Object{"obj-1", time.Time{}},
-		Object{"obj-3", time.Time{}},
+		Object{Name: "obj-1"},
+		Object{Name: "obj-3"},
 	}
 
 	resObjects := objects.SelectWithPrefix("obj-")
@@ -27,11 +27,16 @@ func TestSelectWithPrefix(t *testing.T) {
 func TestSelectObjectsWithFromToTime(t *testing.T) {
 
 	objects := Objects{
-		Object{"obj-1", time.Date(2017, time.February, 1, 0, 0, 0, 0, time.Local)},
-		Object{"obj-2", time.Date(2017, time.April, 1, 0, 0, 0, 0, time.Local)},
-		Object{"obj-3", time.Date(2018, time.January, 1, 0, 0, 0, 0, time.Local)},
-		Object{"obj-4", time.Date(2018, time.May, 1, 0, 0, 0, 0, time.Local)},
-		Object{"obj-5", time.Date(2020, time.April, 1, 0, 0, 0, 0, time.Local)},
+		Object{Name: "obj-1",
+			Created: time.Date(2017, time.February, 1, 0, 0, 0, 0, time.Local)},
+		Object{Name: "obj-2",
+			Created: time.Date(2017, time.April, 1, 0, 0, 0, 0, time.Local)},
+		Object{Name: "obj-3",
+			Created: time.Date(2018, time.January, 1, 0, 0, 0, 0, time.Local)},
+		Object{Name: "obj-4",
+			Created: time.Date(2018, time.May, 1, 0, 0, 0, 0, time.Local)},
+		Object{Name: "obj-5",
+			Created: time.Date(2020, time.April, 1, 0, 0, 0, 0, time.Local)},
 	}
 
 	_, err := objects.SelectInTimeRange(
@@ -48,8 +53,8 @@ func TestSelectObjectsWithFromToTime(t *testing.T) {
 	)
 
 	expObjects := Objects{
-		Object{"obj-2", time.Date(2017, time.April, 1, 0, 0, 0, 0, time.Local)},
-		Object{"obj-3", time.Date(2018, time.January, 1, 0, 0, 0, 0, time.Local)},
+		Object{Name: "obj-2", Created: time.Date(2017, time.April, 1, 0, 0, 0, 0, time.Local)},
+		Object{Name: "obj-3", Created: time.Date(2018, time.January, 1, 0, 0, 0, 0, time.Local)},
 	}
 
 	if err != nil {

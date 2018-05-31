@@ -15,6 +15,7 @@ import (
 // make reader?
 type Object struct {
 	Name    string
+	Bucket  string
 	Created time.Time
 }
 
@@ -43,7 +44,7 @@ func FetchProjectBuckets(ctx context.Context, client *storage.Client,
 
 // fetching objects names with created time from bucket
 func FetchBucketObjects(ctx context.Context, client *storage.Client,
-	bucketName string) (objects []Object) {
+	bucketName string) (objects Objects) {
 
 	it := client.Bucket(bucketName).Objects(ctx, nil)
 	for {
@@ -55,27 +56,22 @@ func FetchBucketObjects(ctx context.Context, client *storage.Client,
 			log.Println("GetBucketObjects() failed")
 			return
 		}
-		objects = append(objects, Object{o.Name, o.Created})
+		objects = append(objects, Object{o.Name, o.Bucket, o.Created})
 	}
 
 	return objects
 }
 
 // TODO: testing
-// csv reader for files from bucket
-func GetBucketObjectCSVReader(ctx context.Context, client *storage.Client,
-	bucketName, objectName string) *csv.Reader {
-	objectReader, err := client.Bucket(bucketName).Object(objectName).NewReader(ctx)
+//CSV Reader for object, works only for CSV objects
+func (object Object) NewCSVReader(ctx context.Context, client *storage.Client) *csv.Reader {
+	objectReader, err := client.Bucket(object.Bucket).Object(object.Name).NewReader(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	return csv.NewReader(objectReader) // TODO:  have no closed yet
 }
-
-// func (object Object) NewReader(context.Context) {
-// 	storage.Reader
-// }
 
 // FIXME: *Objects?
 // Select objects from objects list where name has prefix
