@@ -1,4 +1,4 @@
-package storageutil
+package storageutils
 
 import "testing"
 
