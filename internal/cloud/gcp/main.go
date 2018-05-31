@@ -23,10 +23,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	csvReader := objects[0].NewCSVReader(ctx, client)
-
 	var serviceBills billingutils.ServicesBills
-	serviceBills.Fill(csvReader)
-	fmt.Println(serviceBills)
+	serviceBills.FillByObject(ctx, client, &objects[0])
 
+	var sum float64
+	for _, sb := range serviceBills {
+		sum += sb.Cost
+		fmt.Println(sb.Cost)
+	}
+	fmt.Println(sum)
 }

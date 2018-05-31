@@ -1,11 +1,15 @@
 package billingutils
 
 import (
+	"context"
 	"encoding/csv"
 	"io"
 	"log"
 	"strconv"
 	"time"
+	"xproject/internal/cloud/gcp/utils/storageutils"
+
+	"cloud.google.com/go/storage"
 )
 
 // NOTE: may be should fix structure
@@ -17,6 +21,7 @@ type ServiceBill struct {
 	Currency    string
 }
 
+// NOTE: daily??
 type ServicesBills []ServiceBill
 
 // type GCPTableAttributes [5]string
@@ -56,10 +61,13 @@ func filterGCPTableRow(row []string) (res [5]string) {
 }
 
 // NOTE: must free slice before?
+// NOTE: daily
 // FIXME: handle errors
 // TODO: write data into db
+// TODO: fill by objects
 // fill ServicesBills by csv.Reader
-func (sbs *ServicesBills) Fill(reader *csv.Reader) {
+
+func (sbs *ServicesBills) fill(reader *csv.Reader) {
 	reader.Read() // first time - read columns names
 
 	for {
@@ -71,5 +79,14 @@ func (sbs *ServicesBills) Fill(reader *csv.Reader) {
 		sb.setAttributes(row)
 		*sbs = append(*sbs, sb)
 	}
+}
+
+func (sbs *ServicesBills) FillByObject(ctx context.Context, client *storage.Client,
+	object *storageutils.Object) {
+
+	sbs.fill(object.NewCSVReader(ctx, client))
+}
+
+func (sbs *ServicesBills) FillByObjects(objects *storageutils.Objects) {
 
 }
