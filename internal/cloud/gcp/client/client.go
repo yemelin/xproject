@@ -15,7 +15,7 @@ type Client struct {
 }
 
 // TODO: ALL
-type Predicter interface {
+type Predictor interface {
 	predict()
 }
 
