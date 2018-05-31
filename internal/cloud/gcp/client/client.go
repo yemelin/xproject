@@ -1,23 +1,22 @@
 package gcpclient
 
 import (
-	"fmt"
 	"log"
-	"xproject/internal/cloud/gcp/storageutil"
 
 	"golang.org/x/net/context"
 
 	"cloud.google.com/go/storage"
 )
 
+// TODO: way to hide ctx and client?
 type Client struct {
 	ctx           context.Context
 	storageClient *storage.Client
 }
 
-type Client interface {
-	int64 thisMounth()
-	estimated
+// TODO: ALL
+type Predicter interface {
+	predict()
 }
 
 // TODO: constructor or singleton?
@@ -28,16 +27,4 @@ func (c Client) init() {
 		log.Fatal("Client init error\n", err)
 	}
 	c.storageClient = storageClient
-}
-
-func main() {
-
-	reader := storageutil.GetBucketObjectCSVReader(ctx, client, "churomann-bucket", "test-2018-05-23.csv")
-
-	records, err := reader.ReadAll()
-	if err != nil {
-		log.Fatal("error 2", err)
-	}
-
-	fmt.Println(records)
 }
