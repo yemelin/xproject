@@ -24,7 +24,7 @@ type Objects []Object
 // TODO: testing (need test api?)
 // fetching project bucket names
 func FetchProjectBuckets(ctx context.Context, client *storage.Client,
-	projectID string) (buckets []string) {
+	projectID string) (buckets []string, err error) {
 
 	it := client.Buckets(ctx, projectID)
 	for {
@@ -33,18 +33,17 @@ func FetchProjectBuckets(ctx context.Context, client *storage.Client,
 			break
 		}
 		if err != nil {
-			log.Println("GetBucket() failed")
-			return
+			return buckets, errors.New("GetBucket() failed\n" + err.Error())
 		}
 		buckets = append(buckets, b.Name)
 	}
 
-	return buckets
+	return buckets, nil
 }
 
 // fetching objects names with created time from bucket
 func FetchBucketObjects(ctx context.Context, client *storage.Client,
-	bucketName string) (objects Objects) {
+	bucketName string) (objects Objects, err error) {
 
 	it := client.Bucket(bucketName).Objects(ctx, nil)
 	for {
@@ -53,13 +52,12 @@ func FetchBucketObjects(ctx context.Context, client *storage.Client,
 			break
 		}
 		if err != nil {
-			log.Println("GetBucketObjects() failed")
-			return
+			return objects, errors.New("GetBucketObjects() failed\n" + err.Error())
 		}
 		objects = append(objects, Object{o.Name, o.Bucket, o.Created})
 	}
 
-	return objects
+	return objects, nil
 }
 
 // TODO: testing
@@ -67,7 +65,7 @@ func FetchBucketObjects(ctx context.Context, client *storage.Client,
 func (object Object) NewCSVReader(ctx context.Context, client *storage.Client) *csv.Reader {
 	objectReader, err := client.Bucket(object.Bucket).Object(object.Name).NewReader(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err) // FIXME: handle error
 	}
 
 	return csv.NewReader(objectReader) // TODO:  have no closed yet

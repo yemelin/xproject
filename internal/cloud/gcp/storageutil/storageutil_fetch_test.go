@@ -17,7 +17,7 @@ func TestFetchProjectBuckets(t *testing.T) {
 		t.Error("Failed to create client:", err)
 	}
 
-	resBuckets := FetchProjectBuckets(ctx, client, projectID)
+	resBuckets, err := FetchProjectBuckets(ctx, client, projectID)
 
 	expBuckets := []string{"churomann-bucket", "churomann-bucket-2"}
 	if !isStringSlicesEqual(resBuckets, expBuckets) {
@@ -55,7 +55,7 @@ func TestFetchBucketObjects(t *testing.T) {
 		t.Error("Failed to create client: ", err)
 	}
 
-	resObjects := FetchBucketObjects(ctx, client, "churomann-bucket-2")
+	resObjects, err := FetchBucketObjects(ctx, client, "churomann-bucket-2")
 
 	expObjects := []Object{
 		Object{"test1", "churomann-bucket-2", time.Time{}},

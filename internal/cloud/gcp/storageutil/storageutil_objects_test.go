@@ -53,8 +53,10 @@ func TestSelectObjectsWithFromToTime(t *testing.T) {
 	)
 
 	expObjects := Objects{
-		Object{Name: "obj-2", Created: time.Date(2017, time.April, 1, 0, 0, 0, 0, time.Local)},
-		Object{Name: "obj-3", Created: time.Date(2018, time.January, 1, 0, 0, 0, 0, time.Local)},
+		Object{Name: "obj-2",
+			Created: time.Date(2017, time.April, 1, 0, 0, 0, 0, time.Local)},
+		Object{Name: "obj-3",
+			Created: time.Date(2018, time.January, 1, 0, 0, 0, 0, time.Local)},
 	}
 
 	if err != nil {
