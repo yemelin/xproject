@@ -65,9 +65,10 @@ func filterGCPTableRow(row []string) (res [5]string) {
 // FIXME: handle errors
 // TODO: write data into db
 // TODO: fill by objects
-// fill ServicesBills by csv.Reader
+// TODO:
+// add ServiceBill to ServicesBills  csv.Reader
 
-func (sbs *ServicesBills) fill(reader *csv.Reader) {
+func (sbs *ServicesBills) addByReader(reader *csv.Reader) {
 	reader.Read() // first time - read columns names
 
 	for {
@@ -81,12 +82,20 @@ func (sbs *ServicesBills) fill(reader *csv.Reader) {
 	}
 }
 
+// Fill ServicesBills list by csv object, Clean list every time
 func (sbs *ServicesBills) FillByObject(ctx context.Context, client *storage.Client,
 	object *storageutils.Object) {
+	*sbs = nil
 
-	sbs.fill(object.NewCSVReader(ctx, client))
+	sbs.addByReader(object.NewCSVReader(ctx, client))
 }
 
-func (sbs *ServicesBills) FillByObjects(objects *storageutils.Objects) {
+// Fill ServicesBills list by csv objects, Clean list every time
+func (sbs *ServicesBills) FillByObjects(ctx context.Context, client *storage.Client,
+	objects *storageutils.Objects) {
+	*sbs = nil
 
+	for _, o := range *objects {
+		sbs.addByReader(o.NewCSVReader(ctx, client))
+	}
 }
