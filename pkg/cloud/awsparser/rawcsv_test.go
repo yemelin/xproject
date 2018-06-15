@@ -80,7 +80,7 @@ func equalRawCsvs(a, b RawCsv) bool {
 	return true
 }
 
-func TestFilterByIndeces(t *testing.T) {
+func TestFilterByIndices(t *testing.T) {
 	testcases := []struct {
 		name string
 		in   []int
@@ -101,7 +101,7 @@ func TestFilterByIndeces(t *testing.T) {
 			},
 		},
 		{
-			name: "Filter by columns with indeces 0 and 1",
+			name: "Filter by columns with indices 0 and 1",
 			in:   []int{0, 1},
 			out: &RawCsv{
 				records: [][]string{{"a", "b"}, {"1", "2"}},
@@ -115,7 +115,7 @@ func TestFilterByIndeces(t *testing.T) {
 
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
-			csv, err := rawcsv.FilterByIndeces(testcase.in)
+			csv, err := rawcsv.FilterByIndices(testcase.in)
 			if err != nil {
 				t.Fatal("Error encountered: ", err)
 			}

@@ -32,18 +32,17 @@ func RawCsvToDbRecords(csv *RawCsv) ([]*dbrecord.DbRecord, error) {
 		"pricing/term",
 		"pricing/unit",
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("can't filter csv by required columns: %v", err)
 	}
 
 	result := make([]*dbrecord.DbRecord, len(filteredCsv.Rows()))
 
-	for _, filtered := range filteredCsv.Rows()[1:] {
+	for _, row := range filteredCsv.Rows()[1:] {
 
-		IdentityLineItemId := filtered[0]
+		IdentityLineItemId := row[0]
 
-		timeInterval := filtered[1]
+		timeInterval := row[1]
 		intervals := strings.Split(timeInterval, "/")
 		start := intervals[0]
 		end := intervals[1]
@@ -56,63 +55,63 @@ func RawCsvToDbRecords(csv *RawCsv) ([]*dbrecord.DbRecord, error) {
 			return nil, fmt.Errorf("can't parse TimeIntervalEnd: %v", err)
 		}
 
-		BillPayerAccountId, err := strconv.ParseUint(filtered[2], 10, 64)
+		BillPayerAccountId, err := strconv.ParseUint(row[2], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("can't parse as uint64 BillPayerAccountId: %v", err)
 		}
 
-		BillBillingPeriodStartDate, err := time.Parse(time.RFC3339, filtered[3])
+		BillBillingPeriodStartDate, err := time.Parse(time.RFC3339, row[3])
 		if err != nil {
 			return nil, fmt.Errorf("can't parse BillBillingPeriodStartDate: %v", err)
 		}
-		BillBillingPeriodEndDate, err := time.Parse(time.RFC3339, filtered[4])
+		BillBillingPeriodEndDate, err := time.Parse(time.RFC3339, row[4])
 		if err != nil {
 			return nil, fmt.Errorf("can't parse BillBillingPeriodEndDate: %v", err)
 		}
 
-		LineItemLineItemType := filtered[5]
-		LineItemProductCode := filtered[6]
-		LineItemUsageAmount, err := strconv.ParseFloat(filtered[7], 64)
+		LineItemLineItemType := row[5]
+		LineItemProductCode := row[6]
+		LineItemUsageAmount, err := strconv.ParseFloat(row[7], 64)
 		if err != nil {
 			return nil, fmt.Errorf("can't parse as float64 LineItemUsageAmount: %v", err)
 		}
 
-		LineItemCurrencyCode := filtered[8]
+		LineItemCurrencyCode := row[8]
 
-		LineItemUnblendedRate, err := strconv.ParseFloat(filtered[9], 64)
+		LineItemUnblendedRate, err := strconv.ParseFloat(row[9], 64)
 		if err != nil {
 			return nil, fmt.Errorf("can't parse as float64 LineItemUsageAmount: %v", err)
 		}
 
-		LineItemUnblendedCost, err := strconv.ParseFloat(filtered[10], 64)
+		LineItemUnblendedCost, err := strconv.ParseFloat(row[10], 64)
 		if err != nil {
 			return nil, fmt.Errorf("can't parse as float64 LineItemUnblendedCost: %v", err)
 		}
 
-		LineItemBlendedRate, err := strconv.ParseFloat(filtered[11], 64)
+		LineItemBlendedRate, err := strconv.ParseFloat(row[11], 64)
 		if err != nil {
 			return nil, fmt.Errorf("can't parse as float64 LineItemBlendedRate: %v", err)
 		}
 
-		LineItemBlendedCost, err := strconv.ParseFloat(filtered[12], 64)
+		LineItemBlendedCost, err := strconv.ParseFloat(row[12], 64)
 		if err != nil {
 			return nil, fmt.Errorf("can't parse as float64 LineItemBlendedCost: %v", err)
 		}
 
-		Productregion := filtered[13]
-		Productsku := filtered[14]
+		Productregion := row[13]
+		Productsku := row[14]
 
-		PricingpublicOnDemandCost, err := strconv.ParseFloat(filtered[15], 64)
+		PricingpublicOnDemandCost, err := strconv.ParseFloat(row[15], 64)
 		if err != nil {
 			return nil, fmt.Errorf("can't parse as float64 PricingpublicOnDemandCost: %v", err)
 		}
-		PricingpublicOnDemandRate, err := strconv.ParseFloat(filtered[16], 64)
+		PricingpublicOnDemandRate, err := strconv.ParseFloat(row[16], 64)
 		if err != nil {
 			return nil, fmt.Errorf("can't parse as float64 PricingpublicOnDemandRate: %v", err)
 		}
 
-		Pricingterm := filtered[17]
-		Pricingunit := filtered[18]
+		Pricingterm := row[17]
+		Pricingunit := row[18]
 
 		dbrec := &dbrecord.DbRecord{
 			IdentityLineItemId:         IdentityLineItemId,

@@ -68,20 +68,20 @@ func (raw *RawCsv) ColumnIndexByName(name string) (int, error) {
 
 // FilterByNames returns RawCsv with provided header names only
 func (raw *RawCsv) FilterByNames(columns []string) (*RawCsv, error) {
-	indeces := make([]int, len(columns))
+	indices := make([]int, len(columns))
 	for i, columnName := range columns {
 		idx, err := raw.ColumnIndexByName(columnName)
 		if err != nil {
 			return nil, fmt.Errorf("can't get column index by name \"%v\": %v", columnName, err)
 		}
-		indeces[i] = idx
+		indices[i] = idx
 	}
 
-	return raw.FilterByIndeces(indeces)
+	return raw.FilterByIndices(indices)
 }
 
-// FilterByIndeces returns RawCsv with provided header indeces only
-func (raw *RawCsv) FilterByIndeces(indeces []int) (*RawCsv, error) {
+// FilterByIndices returns RawCsv with provided header indices only
+func (raw *RawCsv) FilterByIndices(indices []int) (*RawCsv, error) {
 	rows := raw.Rows()
 	if rows == nil {
 		return nil, fmt.Errorf("RawCsv is empty.")
@@ -89,8 +89,8 @@ func (raw *RawCsv) FilterByIndeces(indeces []int) (*RawCsv, error) {
 
 	final := make([][]string, len(rows))
 	for i, r := range rows {
-		final[i] = make([]string, len(indeces))
-		for j, c := range indeces {
+		final[i] = make([]string, len(indices))
+		for j, c := range indices {
 			final[i][j] = r[c]
 		}
 	}
