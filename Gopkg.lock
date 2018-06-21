@@ -31,6 +31,15 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/lib/pq"
+  packages = [
+    ".",
+    "oid"
+  ]
+  revision = "90697d60dd844d5ef6ff15135d0203f65d2f53b8"
+
+[[projects]]
+  branch = "master"
   name = "github.com/valyala/bytebufferpool"
   packages = ["."]
   revision = "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7"
@@ -47,6 +56,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cafa811ae84988ed51af09994e8865763e247b2ad0660e5fd13435512875c178"
+  inputs-digest = "f958e6e1fd3eaa75d6467d0301e8912928fc426a3b2994d207f3279d1080fa6b"
   solver-name = "gps-cdcl"
   solver-version = 1
