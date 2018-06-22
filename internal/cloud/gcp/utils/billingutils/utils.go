@@ -7,9 +7,9 @@ import (
 	"log"
 	"strconv"
 	"time"
-	"xproject/internal/cloud/gcp/utils/storageutils"
 
 	"cloud.google.com/go/storage"
+	"github.com/pavlov-tony/xproject/internal/cloud/gcp/utils/storageutils"
 )
 
 // NOTE: may be should fix structure

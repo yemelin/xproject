@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"xproject/internal/cloud/gcp/utils/billingutils"
-	"xproject/internal/cloud/gcp/utils/storageutils"
 
 	"cloud.google.com/go/storage"
+	"github.com/pavlov-tony/xproject/internal/cloud/gcp/utils/billingutils"
+	"github.com/pavlov-tony/xproject/internal/cloud/gcp/utils/storageutils"
 )
 
 func main() {
