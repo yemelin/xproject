@@ -1,63 +1,63 @@
 package gcpcln
 
 import (
+	"context"
+	"os"
 	"testing"
 )
 
-func Test_Client(t *testing.T) {
-	// ctx := context.Background()
-	// projectID := os.Getenv("APP_PROJECT_ID")
-	// client, err := storage.NewClient(ctx)
-	// if err != nil {
-	// 	t.Error("Failed to create client:", err)
-	// }
-	//
-	// it := client.Buckets(ctx, projectID)
-	// for {
-	// 	b, err := it.Next()
-	// 	if err == iterator.Done {
-	// 		break
-	// 	}
-	// 	if err != nil {
-	// 		t.Error(err)
-	// 	}
-	// 	t.Log(b)
-	// }
+func Test_Client_NewClient(t *testing.T) {
+	ctx := context.Background()
+	_, err := NewClient(ctx)
+	if err != nil {
+		t.Error("Failed to create client:", err)
+	}
 }
 
-//
-// func main() {
-// 	ctx := context.Background()
-//
-// 	client, err := storage.NewClient(ctx)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-//
-// 	objects, err := storageutils.FetchBucketObjects(ctx, client, "churomann-bucket")
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-//
-// 	var serviceBills billingutils.ServicesBills
-// 	serviceBills.FillByObjects(ctx, client, &objects)
-//
-// 	var sum float64
-// 	for _, sb := range serviceBills {
-// 		sum += sb.Cost
-// 	}
-// 	fmt.Println("Full cost from bucket:", sum)
-//
-// 	sum = 0
-// 	objects, err = objects.SelectInTimeRange(
-// 		time.Date(2018, time.May, 29, 0, 0, 0, 0, time.Local),
-// 		time.Now())
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	serviceBills.FillByObjects(ctx, client, &objects)
-// 	for _, sb := range serviceBills {
-// 		sum += sb.Cost
-// 	}
-// 	fmt.Println("Full cost in time period:", sum)
-// }
+func Test_Client_BucketsList(t *testing.T) {
+	ctx := context.Background()
+	cln, err := NewClient(ctx)
+
+	projectID := os.Getenv("APP_PROJECT_ID")
+
+	bs, err := cln.BucketsList(projectID)
+	if err != nil {
+		t.Error("Expected err == nil, Got: ", err)
+	}
+	if len(bs) == 0 {
+		t.Error("Buckets len = 0, exp > 0")
+	}
+}
+
+func Test_Cleint_CsvObjctsList(t *testing.T) {
+	ctx := context.Background()
+	cln, err := NewClient(ctx)
+	if err != nil {
+		t.Error("Failed to create client:", err)
+	}
+	bktName := os.Getenv("APP_PROJECT_BUCKET")
+	prefix := ""
+	objs, err := cln.CsvObjectsList(bktName, prefix)
+	if err != nil {
+		t.Error("Failed to fetch buckets")
+	}
+	if len(objs) == 0 {
+		t.Error("Objects len = 0, exp > 0")
+	}
+}
+
+func Test_Client_CsvObjectContent(t *testing.T) {
+	ctx := context.Background()
+	cln, err := NewClient(ctx)
+	if err != nil {
+		t.Error("Failed to create client:", err)
+	}
+	objCont, err := cln.CsvObjectContent(os.Getenv("APP_PROJECT_BUCKET"),
+		os.Getenv("APP_PROJECT_CSV_OBJECT"))
+	if err != nil {
+		t.Error("Failed to fetch content", err)
+	}
+	if len(objCont) == 0 {
+		t.Error("Object content len == 0, exp > 0")
+	}
+}
