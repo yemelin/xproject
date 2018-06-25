@@ -1,4 +1,4 @@
-package awsparser
+package rawcsv
 
 import (
 	"strings"

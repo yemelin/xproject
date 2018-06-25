@@ -2,16 +2,19 @@ package awsparser
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-	"time"
+	"io"
 
-	"github.com/pavlov-tony/xproject/pkg/cloud/awsparser/models/dbrecord"
+	"github.com/pavlov-tony/xproject/pkg/cloud/awsparser/models/reportrow"
+	"github.com/pavlov-tony/xproject/pkg/csvparse/csvreader"
+	"github.com/pavlov-tony/xproject/pkg/csvparse/rawcsv"
 )
 
-// RawCsvToDbRecords converts RawCsv struct to the slice of DbRecord
-func RawCsvToDbRecords(csv *RawCsv) ([]*dbrecord.DbRecord, error) {
-	filteredCsv, err := csv.FilterByNames([]string{
+var (
+	// NamesToFilter decalared as var because of the nature of the slices,
+	// but it is actually a constant array.
+	// See the description of the headers at the
+	// github.com/pavlov-tony/xproject/pkg/cloud/awsparser/models/reportrow/reportrow.go
+	NamesToFilter = []string{
 		"identity/LineItemId",
 		"identity/TimeInterval", // should br splitted to start and end
 		"bill/PayerAccountId",
@@ -31,112 +34,75 @@ func RawCsvToDbRecords(csv *RawCsv) ([]*dbrecord.DbRecord, error) {
 		"pricing/publicOnDemandRate",
 		"pricing/term",
 		"pricing/unit",
-	})
+	}
+)
+
+// ReportReader is a reader over the io.Reader
+// Each Read() returns the ReportRow which is represents the needed row
+// of the AWS Cost And Usage Report
+type ReportReader struct {
+	reader *csvreader.CsvReader
+}
+
+// NewReportReader returns a new ReportReader
+func NewReportReader(r io.Reader) *ReportReader {
+	csvr := csvreader.New(r, NamesToFilter)
+	return &ReportReader{
+		reader: csvr,
+	}
+}
+
+// Read reads from ReportReader by ReportRow
+func (r *ReportReader) Read() (*reportrow.ReportRow, error) {
+	s, err := r.reader.Read()
+	if err == io.EOF {
+		return nil, err
+	}
+	if err != nil {
+		return nil, fmt.Errorf("can't read: %v", err)
+	}
+
+	return reportrow.FromStrings(s)
+}
+
+// ReadAll collects all the values
+func (rr *ReportReader) ReadAll() ([]*reportrow.ReportRow, error) {
+	// Bewcause of the unknown size of the stream, we do not predict the length
+	// of the resulting slice.
+	result := make([]*reportrow.ReportRow, 0)
+
+	for {
+		row, err := rr.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error while reading from ReportReader: %v", err)
+		}
+
+		result = append(result, row)
+	}
+
+	return result, nil
+}
+
+// RawCsvToDbRecords converts RawCsv struct to the slice of ReportRows.
+// To read a report line by line use the ReportReader
+func RawCsvToReportRows(csv *rawcsv.RawCsv) ([]*reportrow.ReportRow, error) {
+	filteredCsv, err := csv.FilterByNames(NamesToFilter)
 	if err != nil {
 		return nil, fmt.Errorf("can't filter csv by required columns: %v", err)
 	}
 
-	result := make([]*dbrecord.DbRecord, len(filteredCsv.Rows()))
+	result := make([]*reportrow.ReportRow, len(filteredCsv.Rows()))
 
 	for _, row := range filteredCsv.Rows()[1:] {
-
-		IdentityLineItemId := row[0]
-
-		timeInterval := row[1]
-		intervals := strings.Split(timeInterval, "/")
-		start := intervals[0]
-		end := intervals[1]
-		TimeIntervalStart, err := time.Parse(time.RFC3339, start)
+		rr, err := reportrow.FromStrings(row)
 		if err != nil {
-			return nil, fmt.Errorf("can't parse TimeIntervalStart: %v", err)
-		}
-		TimeIntervalEnd, err := time.Parse(time.RFC3339, end)
-		if err != nil {
-			return nil, fmt.Errorf("can't parse TimeIntervalEnd: %v", err)
+			return nil, fmt.Errorf("error while parsing ReportRow: %v", err)
 		}
 
-		BillPayerAccountId, err := strconv.ParseUint(row[2], 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("can't parse as uint64 BillPayerAccountId: %v", err)
-		}
-
-		BillBillingPeriodStartDate, err := time.Parse(time.RFC3339, row[3])
-		if err != nil {
-			return nil, fmt.Errorf("can't parse BillBillingPeriodStartDate: %v", err)
-		}
-		BillBillingPeriodEndDate, err := time.Parse(time.RFC3339, row[4])
-		if err != nil {
-			return nil, fmt.Errorf("can't parse BillBillingPeriodEndDate: %v", err)
-		}
-
-		LineItemLineItemType := row[5]
-		LineItemProductCode := row[6]
-		LineItemUsageAmount, err := strconv.ParseFloat(row[7], 64)
-		if err != nil {
-			return nil, fmt.Errorf("can't parse as float64 LineItemUsageAmount: %v", err)
-		}
-
-		LineItemCurrencyCode := row[8]
-
-		LineItemUnblendedRate, err := strconv.ParseFloat(row[9], 64)
-		if err != nil {
-			return nil, fmt.Errorf("can't parse as float64 LineItemUsageAmount: %v", err)
-		}
-
-		LineItemUnblendedCost, err := strconv.ParseFloat(row[10], 64)
-		if err != nil {
-			return nil, fmt.Errorf("can't parse as float64 LineItemUnblendedCost: %v", err)
-		}
-
-		LineItemBlendedRate, err := strconv.ParseFloat(row[11], 64)
-		if err != nil {
-			return nil, fmt.Errorf("can't parse as float64 LineItemBlendedRate: %v", err)
-		}
-
-		LineItemBlendedCost, err := strconv.ParseFloat(row[12], 64)
-		if err != nil {
-			return nil, fmt.Errorf("can't parse as float64 LineItemBlendedCost: %v", err)
-		}
-
-		Productregion := row[13]
-		Productsku := row[14]
-
-		PricingpublicOnDemandCost, err := strconv.ParseFloat(row[15], 64)
-		if err != nil {
-			return nil, fmt.Errorf("can't parse as float64 PricingpublicOnDemandCost: %v", err)
-		}
-		PricingpublicOnDemandRate, err := strconv.ParseFloat(row[16], 64)
-		if err != nil {
-			return nil, fmt.Errorf("can't parse as float64 PricingpublicOnDemandRate: %v", err)
-		}
-
-		Pricingterm := row[17]
-		Pricingunit := row[18]
-
-		dbrec := &dbrecord.DbRecord{
-			IdentityLineItemId:         IdentityLineItemId,
-			TimeIntervalStart:          TimeIntervalStart,
-			TimeIntervalEnd:            TimeIntervalEnd,
-			BillPayerAccountId:         BillPayerAccountId,
-			BillBillingPeriodStartDate: BillBillingPeriodStartDate,
-			BillBillingPeriodEndDate:   BillBillingPeriodEndDate,
-			LineItemLineItemType:       LineItemLineItemType,
-			LineItemProductCode:        LineItemProductCode,
-			LineItemUsageAmount:        LineItemUsageAmount,
-			LineItemCurrencyCode:       LineItemCurrencyCode,
-			LineItemUnblendedRate:      LineItemUnblendedRate,
-			LineItemUnblendedCost:      LineItemUnblendedCost,
-			LineItemBlendedRate:        LineItemBlendedRate,
-			LineItemBlendedCost:        LineItemBlendedCost,
-			Productregion:              Productregion,
-			Productsku:                 Productsku,
-			PricingpublicOnDemandCost:  PricingpublicOnDemandCost,
-			PricingpublicOnDemandRate:  PricingpublicOnDemandRate,
-			Pricingterm:                Pricingterm,
-			Pricingunit:                Pricingunit,
-		}
-
-		result = append(result, dbrec)
+		result = append(result, rr)
 	}
 
 	return result, nil

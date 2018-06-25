@@ -1,4 +1,4 @@
-package awsparser
+package summary
 
 // SummaryConfig represents the configuration to
 type SummaryConfig struct {
@@ -10,6 +10,7 @@ type SummaryConfig struct {
 	SumBy []string
 }
 
+// NewSummaryConfig returns a new SummaryConfig
 func NewSummaryConfig(groupBy string, sumBy []string) *SummaryConfig {
 	return &SummaryConfig{
 		GroupBy: groupBy,
@@ -23,8 +24,8 @@ type CsvSummary struct {
 	inner   *map[string]([]float64)
 }
 
-// NewSummaryConfig returns the new CsvSummary
-func NewCsvSummary(h []string, m *map[string]([]float64)) *CsvSummary {
+// New returns the new CsvSummary
+func New(h []string, m *map[string]([]float64)) *CsvSummary {
 	return &CsvSummary{
 		headers: h,
 		inner:   m,

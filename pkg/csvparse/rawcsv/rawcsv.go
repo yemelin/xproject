@@ -1,4 +1,4 @@
-package awsparser
+package rawcsv
 
 import (
 	"encoding/csv"
@@ -6,8 +6,9 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/pavlov-tony/xproject/pkg/cloud/awsparser/csvparseutils"
-	"github.com/pavlov-tony/xproject/pkg/cloud/awsparser/errors"
+	"github.com/pavlov-tony/xproject/pkg/csvparse/csvparseutils"
+	"github.com/pavlov-tony/xproject/pkg/csvparse/errors"
+	"github.com/pavlov-tony/xproject/pkg/csvparse/summary"
 )
 
 // RawCsv represents the matrix of strings parsed from CSV
@@ -100,7 +101,7 @@ func (raw *RawCsv) FilterByIndices(indices []int) (*RawCsv, error) {
 
 // GetSummary returns the summary of the RawCsv
 // It's basically grouping by the GroupBy field, and sum the SumBy columns of the RawCsv
-func (rawcsv *RawCsv) GetSummary(cfg *SummaryConfig) (*CsvSummary, error) {
+func (rawcsv *RawCsv) GetSummary(cfg *summary.SummaryConfig) (*summary.CsvSummary, error) {
 	if cfg.GroupBy == "" || cfg.SumBy == nil {
 		return nil, fmt.Errorf("can't produce CsvSummary: GroupBy and SumBy mustn't be empty")
 	}
@@ -134,5 +135,5 @@ func (rawcsv *RawCsv) GetSummary(cfg *SummaryConfig) (*CsvSummary, error) {
 		}
 	}
 
-	return NewCsvSummary(filtered.Rows()[0], &summ), nil
+	return summary.New(filtered.Rows()[0], &summ), nil
 }
