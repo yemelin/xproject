@@ -1,11 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/pavlov-tony/xproject/internal/handlers"
 
 	"github.com/buaazp/fasthttprouter"
+	"github.com/seatgeek/graceful_listener"
 	"github.com/valyala/fasthttp"
 )
 
@@ -21,7 +28,36 @@ func main() {
 	router.DELETE(apiPrefix+"/instance/:id", handlers.DeleteInstanceByID)
 	router.GET(apiPrefix+"/instance/:id/history", handlers.GetInstanceHistoryByID)
 
-	log.Println("service is started")
+	router.GET("/status", func(ctx *fasthttp.RequestCtx) {
+		fmt.Fprintf(ctx, "OK")
+	})
 
-	log.Fatal(fasthttp.ListenAndServe(":8080", router.Handler))
+	l, err := net.Listen("tcp4", ":8080")
+	if err != nil {
+		log.Fatal("failed to open a socket: ", err)
+	}
+
+	gl := graceful_listener.NewGracefulListener(l, 5*time.Second)
+
+	// Register system interrupt signals catching for graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(
+		stop,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGHUP,
+	)
+
+	go func() {
+		log.Println("service has started")
+		err := fasthttp.Serve(gl, router.Handler)
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+
+	<-stop
+	log.Println("shutting down the server...")
+	gl.Close()
+	log.Println("server gracefully stopped")
 }
