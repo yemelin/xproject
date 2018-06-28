@@ -5,22 +5,17 @@ services:
             dockerfile: Base.Dockerfile
             context: ../build/package/
         image: ${APP_NAME:-xproject}:base
-        security_opt:
-            - seccomp:unconfined
-        command: dlv debug . -l 0.0.0.0:2345 --headless=true --log=true
+        command: sh -c "go test -v ./... -tags integration"
         volumes:
             - ../:/go/src/github.com/pavlov-tony/xproject
         env_file:
             - ../build/package/dev_config.env
         environment:
-            - PROFILE=DEV
+            - PROFILE=TEST
         ports:
-            - "2345:2345"
             - "8080:8080"
-        expose:
-            - "2345"
-            - "8080"
-        container_name: ${APP_NAME:-xproject}-api-debug
+        working_dir: /go/src/github.com/pavlov-tony/xproject
+        container_name: ${APP_NAME:-xproject}-api-test
         networks: 
             - default-network
         depends_on: 
@@ -29,12 +24,14 @@ services:
         build:
             dockerfile: PG.Dockerfile
             context: ../build/package/
+        volumes:
+            - ../scripts/initdb/init_test_db.sh:/docker-entrypoint-initdb.d/init_test_db.sh
         environment:
-            - POSTGRES_USER=xproject
-            - POSTGRES_PASSWORD=xproject
+            - POSTGRES_USER=xproject-test
+            - POSTGRES_PASSWORD=xproject-test
         ports:
             - '5432:5432'
-        container_name: ${APP_NAME:-xproject}-postgres
+        container_name: ${APP_NAME:-xproject}-postgres-test
         networks: 
             - default-network
 

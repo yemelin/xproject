@@ -23,6 +23,11 @@ services:
         build:
             dockerfile: PG.Dockerfile
             context: ../build/package/
+        volumes:
+            - xproject-pgdata:/var/lib/postgresql/data
+        environment:
+            - POSTGRES_USER=xproject
+            - POSTGRES_PASSWORD=xproject
         ports:
             - '5432:5432'
         container_name: ${APP_NAME:-xproject}-postgres
@@ -31,3 +36,8 @@ services:
 
 networks:
   default-network:
+
+volumes:
+    xproject-pgdata:
+        external:
+            name: xproject-pgdata

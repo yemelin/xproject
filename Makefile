@@ -3,13 +3,41 @@ include build/package/dev_config.env
 PROOT=/go/src/github.com/pavlov-tony/xproject
 # image name for docker
 IMAGE_NAME=xproject
-# build args for Dockerfile's
+
 DOCKER_RUN_DEV=@docker run --rm -i -v `pwd`:${PROOT} -v `pwd`/build/.gometalinter.json:/go/src/.gometalinter.json -w ${PROOT}
+APP_DB_USER=xproject
+APP_DB_PWD=xproject
+
+.PHONY: db/volume
+db/volume:
+	@docker volume create xproject-pgdata
 
 .PHONY: build-base
 build-base:
 	@echo "::: building base image"
 	@docker build -f build/package/Base.Dockerfile -t $(IMAGE_NAME):base .
+
+.PHONY: install
+install: db/volume build-base
+
+.PHONY: db/run
+db/run:
+	@echo "::: running postgres"
+	@scripts/pgrunandwait.sh
+
+#check if a variable is set
+.PHONY: check-%
+check-%:
+	@ if [ "${${*}}" = "" ]; then \
+		echo "$* missing"; \
+		exit 1; \
+	fi
+
+.PHONY: db/migrations
+db/migrations: check-CMD db/run
+	@echo "::: running migrations..."
+	-@migrate -database "postgres://${APP_DB_USER}:${APP_DB_PWD}@localhost:5432/xproject?sslmode=disable" -path migrations $$CMD
+	@docker stop xproject-postgres
 
 #RUN actions
 .PHONY: unit-test
@@ -29,7 +57,7 @@ cover:
 	@xdg-open coverage.html
 
 .PHONY: run
-run:
+run: check-CMD
 	@echo "::: running command inside container"
 	$(DOCKER_RUN_DEV) $(IMAGE_NAME):base sh -c "$(CMD)"
 
@@ -39,7 +67,7 @@ deps:
 	$(DOCKER_RUN_DEV) $(IMAGE_NAME):base sh -c "dep ensure -v -update"
 
 .PHONY: dep-add
-dep-add:
+dep-add: check-PKG
 	@echo "::: installing package $(PKG)"
 	$(DOCKER_RUN_DEV) $(IMAGE_NAME):base sh -c "dep ensure -add $(PKG)"
 
@@ -47,7 +75,7 @@ dep-add:
 .PHONY: up
 up:
 	@echo "::: building dev environment on port 8080"
-	@docker-compose -f `pwd`/deployments/docker-compose.yml up --build
+	@docker-compose -f `pwd`/deployments/docker-compose.yml up
 
 .PHONY: down
 down:
@@ -63,3 +91,9 @@ debug:
 debug-down:
 	@echo "::: tear down debug dev environment"
 	@docker-compose -f `pwd`/deployments/docker-compose-debug.yml down
+
+.PHONY: integration-test
+integration-test:
+	@echo "::: running integration tests"
+	-@docker-compose -f `pwd`/deployments/docker-compose-integration.yml up --abort-on-container-exit
+	@docker-compose -f `pwd`/deployments/docker-compose-integration.yml down
