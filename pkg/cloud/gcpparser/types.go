@@ -17,6 +17,7 @@ type ServiceBill struct {
 // Set of ServiceBill
 type ServicesBills []*ServiceBill
 
+// gcp csv billing file's columns numbers
 const (
 	ColLineItem    = 1
 	ColStartTime   = 2

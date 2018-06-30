@@ -6,15 +6,22 @@ import (
 	"time"
 )
 
+// Parse full GCP csv billing file
 func Parse(data [][]string) (res ServicesBills, err error) {
 	for _, l := range data {
-        sb, err := 
+		sb, err := parseLine(l)
+		if err != nil {
+			return nil, errors.New("Parse: " + err.Error())
+		}
+		res = append(res, sb)
 	}
 
 	return res, nil
 }
 
+// Parse row from GCP csv billing file
 func parseLine(line []string) (*ServiceBill, error) {
+	// TODO: fix magic number
 	if len(line) < 20 {
 		return nil, errors.New("parseLine: line length < 20")
 	}
