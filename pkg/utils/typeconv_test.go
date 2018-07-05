@@ -1,4 +1,4 @@
-package csvparseutils
+package utils
 
 import (
 	"testing"
@@ -26,12 +26,12 @@ func TestStringSliceToFloat64(t *testing.T) {
 		t.Run(testcase.name, func(t *testing.T) {
 			floats, err := StringSliceToFloat64(testcase.in)
 			if err != nil {
-				t.Fatal("Error encountered: ", err)
+				t.Fatal("Error while converting slice of string to slice of floats: ", err)
 			}
 
 			for i, item := range floats {
 				if item != testcase.out[i] {
-					t.Fatal("Slices arn't the same: ", testcase, "!=", testcase.out)
+					t.Fatal("Slices aren't the same: ", testcase, "!=", testcase.out)
 				}
 			}
 		})
