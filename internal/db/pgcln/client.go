@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
+	"time"
 	// Don't forget add driver importing to main
 	// _ "github.com/lib/pq"
 )
@@ -43,24 +45,14 @@ type Client struct {
 // Report represents the structure of CSV file
 // CSV file used as example: https://storage.googleapis.com/churomann-bucket/test-2018-05-23.csv
 type Report struct {
-	AccountID              string `csv:"Account ID"`
-	LineItem               string `csv:"Line Item"`
-	StartTime              string `csv:"Start Time"`
-	EndTime                string `csv:"End Time"`
-	Project                string `csv:"Project"`
-	Measurement            string `csv:"Measurement1"`
-	MeasurementConsumption string `csv:"Measurement1 Total Consumption"`
-	MeasurementUnits       string `csv:"Measurement1 Units"`
-	Credit                 string `csv:"Credit1"`
-	CreditAmount           string `csv:"Credit1 Amount"`
-	CreditCurrency         string `csv:"Credit1 Currency"`
-	Cost                   string `csv:"Cost"`
-	Currency               string `csv:"Currency"`
-	ProjectNumber          string `csv:"Project Number"`
-	ProjectID              string `csv:"Project ID"`
-	ProjectName            string `csv:"Project Name"`
-	ProjectLabels          string `csv:"Project Labels"`
-	Description            string `csv:"Description"`
+	AccountID   string    `csv:"Account ID"`
+	LineItem    string    `csv:"Line Item"`
+	StartTime   time.Time `csv:"Start Time"`
+	EndTime     time.Time `csv:"End Time"`
+	Cost        float64   `csv:"Cost"`
+	Currency    string    `csv:"Currency"`
+	ProjectID   string    `csv:"Project ID"`
+	Description string    `csv:"Description"`
 }
 
 // New inits client
@@ -138,22 +130,31 @@ func (c *Client) SelectReports() ([]Report, error) {
 		// result[0] is unique id which is not a part of the report
 		row.AccountID = result[1]
 		row.LineItem = result[2]
-		row.StartTime = result[3]
-		row.EndTime = result[4]
-		row.Project = result[5]
-		row.Measurement = result[6]
-		row.MeasurementConsumption = result[7]
-		row.MeasurementUnits = result[8]
-		row.Credit = result[9]
-		row.CreditAmount = result[10]
-		row.CreditCurrency = result[11]
-		row.Cost = result[12]
-		row.Currency = result[13]
-		row.ProjectNumber = result[14]
-		row.ProjectID = result[15]
-		row.ProjectName = result[16]
-		row.ProjectLabels = result[17]
-		row.Description = result[18]
+
+		t, err := time.Parse(time.RFC3339, result[3])
+		if err != nil {
+			log.Printf("%v: db time parse err, %v", pgkLogPref, err)
+			return nil, err
+		}
+		row.StartTime = t
+
+		t, err = time.Parse(time.RFC3339, result[4])
+		if err != nil {
+			log.Printf("%v: db time parse err, %v", pgkLogPref, err)
+			return nil, err
+		}
+		row.EndTime = t
+
+		cost, err := strconv.ParseFloat(result[5], 64)
+		if err != nil {
+			log.Printf("%v: db parse float err, %v", pgkLogPref, err)
+			return nil, err
+		}
+		row.Cost = cost
+
+		row.Currency = result[6]
+		row.ProjectID = result[7]
+		row.Description = result[8]
 
 		table = append(table, row)
 	}
@@ -166,21 +167,11 @@ func (c *Client) InsertReport(report Report) error {
 	_, err := c.idb.Query("INSERT INTO xproject.reports VALUES(DEFAULT, '" +
 		report.AccountID + "', '" +
 		report.LineItem + "', '" +
-		report.StartTime + "', '" +
-		report.EndTime + "', '" +
-		report.Project + "', '" +
-		report.Measurement + "', '" +
-		report.MeasurementConsumption + "', '" +
-		report.MeasurementUnits + "', '" +
-		report.Credit + "', '" +
-		report.CreditAmount + "', '" +
-		report.CreditCurrency + "', '" +
-		report.Cost + "', '" +
+		report.StartTime.Format(time.RFC3339) + "', '" +
+		report.EndTime.Format(time.RFC3339) + "', " +
+		strconv.FormatFloat(report.Cost, 'f', 6, 64) + ", '" +
 		report.Currency + "', '" +
-		report.ProjectNumber + "', '" +
 		report.ProjectID + "', '" +
-		report.ProjectName + "', '" +
-		report.ProjectLabels + "', '" +
 		report.Description + "')")
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgkLogPref, err)
