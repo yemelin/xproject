@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	pgkLogPref = "postgres client"
+	pkgLogPref = "postgres client"
 )
 
 // Env for testing
@@ -68,7 +68,7 @@ func New(conf Config) (*Client, error) {
 	)
 	db, err := sql.Open("postgres", dbSourceName)
 	if err != nil {
-		log.Printf("%v: db open err, %v", pgkLogPref, err)
+		log.Printf("%v: db open err, %v", pkgLogPref, err)
 		return nil, err
 	}
 
@@ -88,17 +88,21 @@ func (c *Client) Ping() error {
 	return c.idb.Ping()
 }
 
-// SelectReports returns all reports from db
-func (c *Client) SelectReports() ([]Report, error) {
+// SelectReports returns reports from db that belong to specified time period
+func (c *Client) SelectReports(start, end time.Time) ([]Report, error) {
+	if start.After(end) || end.Before(start) {
+		return nil, fmt.Errorf("%v: invalid arguments err", pkgLogPref)
+	}
+
 	rows, err := c.idb.Query("SELECT * FROM xproject.reports")
 	if err != nil {
-		log.Printf("%v: db query err, %v", pgkLogPref, err)
+		log.Printf("%v: db query err, %v", pkgLogPref, err)
 		return nil, err
 	}
 
 	cols, err := rows.Columns()
 	if err != nil {
-		log.Printf("%v: db columns err, %v", pgkLogPref, err)
+		log.Printf("%v: db columns err, %v", pkgLogPref, err)
 		return nil, err
 	}
 
@@ -115,7 +119,7 @@ func (c *Client) SelectReports() ([]Report, error) {
 
 	for rows.Next() {
 		if err := rows.Scan(dest...); err != nil {
-			log.Printf("%v: db scan err, %v", pgkLogPref, err)
+			log.Printf("%v: db scan err, %v", pkgLogPref, err)
 			return nil, err
 		}
 
@@ -131,26 +135,27 @@ func (c *Client) SelectReports() ([]Report, error) {
 		row.AccountID = result[1]
 		row.LineItem = result[2]
 
-		t, err := time.Parse(time.RFC3339, result[3])
+		row.StartTime, err = time.Parse(time.RFC3339, result[3])
 		if err != nil {
-			log.Printf("%v: db time parse err, %v", pgkLogPref, err)
+			log.Printf("%v: db time parse err, %v", pkgLogPref, err)
 			return nil, err
 		}
-		row.StartTime = t
 
-		t, err = time.Parse(time.RFC3339, result[4])
+		row.EndTime, err = time.Parse(time.RFC3339, result[4])
 		if err != nil {
-			log.Printf("%v: db time parse err, %v", pgkLogPref, err)
+			log.Printf("%v: db time parse err, %v", pkgLogPref, err)
 			return nil, err
 		}
-		row.EndTime = t
 
-		cost, err := strconv.ParseFloat(result[5], 64)
+		if row.StartTime.After(end) || row.EndTime.Before(start) {
+			continue
+		}
+
+		row.Cost, err = strconv.ParseFloat(result[5], 64)
 		if err != nil {
-			log.Printf("%v: db parse float err, %v", pgkLogPref, err)
+			log.Printf("%v: db parse float err, %v", pkgLogPref, err)
 			return nil, err
 		}
-		row.Cost = cost
 
 		row.Currency = result[6]
 		row.ProjectID = result[7]
@@ -174,7 +179,7 @@ func (c *Client) InsertReport(report Report) error {
 		report.ProjectID + "', '" +
 		report.Description + "')")
 	if err != nil {
-		log.Printf("%v: db query err, %v", pgkLogPref, err)
+		log.Printf("%v: db query err, %v", pkgLogPref, err)
 		return err
 	}
 
@@ -185,7 +190,7 @@ func (c *Client) InsertReport(report Report) error {
 func (c *Client) DeleteLastReport() error {
 	_, err := c.idb.Query("DELETE FROM xproject.reports WHERE id = (SELECT MAX(id) FROM xproject.reports)")
 	if err != nil {
-		log.Printf("%v: db query err, %v", pgkLogPref, err)
+		log.Printf("%v: db query err, %v", pkgLogPref, err)
 		return err
 	}
 
