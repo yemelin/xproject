@@ -167,9 +167,9 @@ func (c *Client) SelectReports(start, end time.Time) ([]Report, error) {
 	return table, nil
 }
 
-// InsertReport inserts a report into db
+// InsertReport inserts report into db
 func (c *Client) InsertReport(report Report) error {
-	_, err := c.idb.Query("INSERT INTO xproject.reports VALUES(DEFAULT, '" +
+	if _, err := c.idb.Query("INSERT INTO xproject.reports VALUES(DEFAULT, '" +
 		report.AccountID + "', '" +
 		report.LineItem + "', '" +
 		report.StartTime.Format(time.RFC3339) + "', '" +
@@ -177,8 +177,7 @@ func (c *Client) InsertReport(report Report) error {
 		strconv.FormatFloat(report.Cost, 'f', 6, 64) + ", '" +
 		report.Currency + "', '" +
 		report.ProjectID + "', '" +
-		report.Description + "')")
-	if err != nil {
+		report.Description + "')"); err != nil {
 		log.Printf("%v: db query err, %v", pkgLogPref, err)
 		return err
 	}
@@ -188,8 +187,7 @@ func (c *Client) InsertReport(report Report) error {
 
 // DeleteLastReport deletes the last report from db
 func (c *Client) DeleteLastReport() error {
-	_, err := c.idb.Query("DELETE FROM xproject.reports WHERE id = (SELECT MAX(id) FROM xproject.reports)")
-	if err != nil {
+	if _, err := c.idb.Query("DELETE FROM xproject.reports WHERE id = (SELECT MAX(id) FROM xproject.reports)"); err != nil {
 		log.Printf("%v: db query err, %v", pkgLogPref, err)
 		return err
 	}
