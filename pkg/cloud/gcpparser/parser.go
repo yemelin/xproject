@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Parse full GCP csv billing file
+// Parse need for parse full GCP csv billing file
 func Parse(data [][]string) (res ServicesBills, err error) {
 	for _, l := range data {
 		sb, err := parseLine(l)
@@ -19,7 +19,7 @@ func Parse(data [][]string) (res ServicesBills, err error) {
 	return res, nil
 }
 
-// Parse row from GCP csv billing file
+// parseLine need for parse row from GCP csv billing file
 func parseLine(line []string) (*ServiceBill, error) {
 	if len(line) < MaxColNum {
 		return nil, fmt.Errorf("parse line: line length < MaxColNum")

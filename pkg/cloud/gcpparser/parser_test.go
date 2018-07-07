@@ -19,6 +19,6 @@ func Test_Parse(t *testing.T) {
 	}
 	exp := "com.google.cloud/services/cloud-storage/StorageMultiRegionalUsGbsec"
 	if res[0].Item != exp {
-		t.Errorf("parse:\nexp: %v, res %v", exp, res[0].Item)
+		t.Errorf("parse:\nExp: %v, Got: %v", exp, res[0].Item)
 	}
 }

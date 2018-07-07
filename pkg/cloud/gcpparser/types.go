@@ -14,7 +14,7 @@ const (
 	MaxColNum      = 20
 )
 
-// Struct represent a composition of main service fields from gcp billing csv file
+// ServiceBill represent a composition of main service fields from gcp billing csv file
 // for cost calculation tasks
 type ServiceBill struct {
 	Item    string    // column number: 1
@@ -26,5 +26,5 @@ type ServiceBill struct {
 	Descr   string    // 20
 }
 
-// Set of ServiceBill
+// ServicesBills is a set of ServiceBill
 type ServicesBills []*ServiceBill
