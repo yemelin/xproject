@@ -1,3 +1,4 @@
+// Package gcpcln periodically fetches csv from gcp bucket and writes in into db
 package gcpcln
 
 import (
