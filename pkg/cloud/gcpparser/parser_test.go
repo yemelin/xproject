@@ -1,3 +1,4 @@
+// Package gcpparser uses for parse raw GCP billing csv file
 package gcpparser
 
 import (
