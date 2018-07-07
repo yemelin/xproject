@@ -2,6 +2,18 @@ package gcpparser
 
 import "time"
 
+// gcp csv billing file's columns numbers
+const (
+	ColLineItem    = 1
+	ColStartTime   = 2
+	ColEndTime     = 3
+	ColCost        = 14
+	ColCurrency    = 15
+	ColProjectID   = 17
+	ColDescription = 20
+	MaxColNum      = 20
+)
+
 // Struct represent a composition of main service fields from gcp billing csv file
 // for cost calculation tasks
 type ServiceBill struct {
@@ -16,14 +28,3 @@ type ServiceBill struct {
 
 // Set of ServiceBill
 type ServicesBills []*ServiceBill
-
-// gcp csv billing file's columns numbers
-const (
-	ColLineItem    = 1
-	ColStartTime   = 2
-	ColEndTime     = 3
-	ColCost        = 14
-	ColCurrency    = 15
-	ColProjectID   = 17
-	ColDescription = 20
-)

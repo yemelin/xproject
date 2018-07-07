@@ -1,7 +1,7 @@
 package gcpparser
 
 import (
-	"errors"
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -11,7 +11,7 @@ func Parse(data [][]string) (res ServicesBills, err error) {
 	for _, l := range data {
 		sb, err := parseLine(l)
 		if err != nil {
-			return nil, errors.New("Parse: " + err.Error())
+			return nil, fmt.Errorf("parse: %v", err)
 		}
 		res = append(res, sb)
 	}
@@ -21,25 +21,24 @@ func Parse(data [][]string) (res ServicesBills, err error) {
 
 // Parse row from GCP csv billing file
 func parseLine(line []string) (*ServiceBill, error) {
-	// TODO: fix magic number
-	if len(line) < 20 {
-		return nil, errors.New("parseLine: line length < 20")
+	if len(line) < MaxColNum {
+		return nil, fmt.Errorf("parse line: line length < MaxColNum")
 	}
 
 	st, err := time.Parse(time.RFC3339, line[ColStartTime])
 	if err != nil {
-		return nil, errors.New("parseLine: can not parse StartTime")
+		return nil, fmt.Errorf("parse line: can not parse StartTime, %v", err)
 	}
 	et, err := time.Parse(time.RFC3339, line[ColEndTime])
 	if err != nil {
-		return nil, errors.New("parseLine: can not parse EndTime")
+		return nil, fmt.Errorf("parse line: can not parse EndTime, %v", err)
 	}
 	cst, err := strconv.ParseFloat(line[ColCost], 64)
 	if err != nil {
-		return nil, errors.New("parseLine: can not parse Cost")
+		return nil, fmt.Errorf("parse line: can not parse Cost, %v", err)
 	}
 
-	return &ServiceBill{
+	sb := ServiceBill{
 		Item:    line[ColLineItem],
 		Started: st,
 		Ended:   et,
@@ -47,5 +46,7 @@ func parseLine(line []string) (*ServiceBill, error) {
 		Curr:    line[ColCurrency],
 		ProjID:  line[ColProjectID],
 		Descr:   line[ColDescription],
-	}, nil
+	}
+
+	return &sb, nil
 }
