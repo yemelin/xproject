@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
+	"time"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
@@ -85,8 +86,15 @@ func (c *Client) CsvObjectContent(bktName, objName string) ([][]string, error) {
 }
 
 // Fetch periodically fetches data into db from GCP
-func (c *Client) Fetch() {
-	// TODO: use CsvObjectContent
-	// TODO: parse raw csv content
-	// TODO: use pgcln here to write parsed csv into db
+func (c *Client) Fetch(bktName, objName string, dt time.Duration) {
+	for {
+		// select last date from db
+
+		c.CsvObjectContent(bktName, objName)
+		// TODO: use CsvObjectContent
+		// TODO: parse raw csv content
+		// TODO: use pgcln here to write parsed csv into db
+
+		time.Sleep(dt * time.Hour)
+	}
 }
