@@ -89,13 +89,13 @@ func (c *Client) Ping() error {
 	return c.idb.Ping()
 }
 
-// SelectReports returns reports from db that belong to specified time period
-func (c *Client) SelectReports(start, end time.Time) ([]Report, error) {
+// SelectReportsByTime returns reports from db that belong to specified time period
+func (c *Client) SelectReportsByTime(start, end time.Time) ([]Report, error) {
 	if start.After(end) || end.Before(start) {
 		return nil, fmt.Errorf("%v: invalid arguments err", pgcLogPref)
 	}
 
-	rows, err := c.idb.Query("SELECT * FROM xproject.reports")
+	rows, err := c.idb.Query("SELECT * FROM xproject.reports ORDER BY id ASC")
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -152,7 +152,7 @@ func (c *Client) SelectReports(start, end time.Time) ([]Report, error) {
 			return nil, err
 		}
 
-		if row.StartTime.After(end) || row.EndTime.Before(start) {
+		if row.StartTime.Before(start) || row.EndTime.After(end) {
 			continue
 		}
 
@@ -170,6 +170,154 @@ func (c *Client) SelectReports(start, end time.Time) ([]Report, error) {
 	}
 
 	return table, nil
+}
+
+// SelectReportsByService returns reports from db that are related to specified GCP service
+// If service is an empty string then all reports will be returned
+func (c *Client) SelectReportsByService(service string) ([]Report, error) {
+	rows, err := c.idb.Query("SELECT * FROM xproject.reports WHERE line_item LIKE '%" + service + "%' ORDER BY id ASC")
+	if err != nil {
+		log.Printf("%v: db query err, %v", pgcLogPref, err)
+		return nil, err
+	}
+
+	cols, err := rows.Columns()
+	if err != nil {
+		log.Printf("%v: db columns err, %v", pgcLogPref, err)
+		return nil, err
+	}
+
+	if len(cols) != dbColumns {
+		return nil, fmt.Errorf("%v: db format doesn't match Report struct", pgcLogPref)
+	}
+
+	var table []Report
+	var row Report
+
+	result := make([]string, len(cols))
+	rawResult := make([][]byte, len(cols))
+	dest := make([]interface{}, len(cols))
+
+	for i := range rawResult {
+		dest[i] = &rawResult[i]
+	}
+
+	for rows.Next() {
+		if err := rows.Scan(dest...); err != nil {
+			log.Printf("%v: db scan err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		for i, raw := range rawResult {
+			if raw != nil {
+				result[i] = string(raw)
+			} else {
+				result[i] = "\\N"
+			}
+		}
+
+		// result[0] is unique id which is not a part of the report
+		row.AccountID = result[1]
+		row.LineItem = result[2]
+
+		row.StartTime, err = time.Parse(time.RFC3339, result[3])
+		if err != nil {
+			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		row.EndTime, err = time.Parse(time.RFC3339, result[4])
+		if err != nil {
+			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		row.Cost, err = strconv.ParseFloat(result[5], 64)
+		if err != nil {
+			log.Printf("%v: db parse float err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		row.Currency = result[6]
+		row.ProjectID = result[7]
+		row.Description = result[8]
+
+		table = append(table, row)
+	}
+
+	return table, nil
+}
+
+// SelectLastReport returns pointer to the latest added report from db
+func (c *Client) SelectLastReport() (Report, error) {
+	var row Report
+
+	rows, err := c.idb.Query("SELECT * FROM xproject.reports WHERE id = (SELECT MAX(id) FROM xproject.reports)")
+	if err != nil {
+		log.Printf("%v: db query err, %v", pgcLogPref, err)
+		return row, err
+	}
+
+	cols, err := rows.Columns()
+	if err != nil {
+		log.Printf("%v: db columns err, %v", pgcLogPref, err)
+		return row, err
+	}
+
+	if len(cols) != dbColumns {
+		return row, fmt.Errorf("%v: db format doesn't match Report struct", pgcLogPref)
+	}
+
+	result := make([]string, len(cols))
+	rawResult := make([][]byte, len(cols))
+	dest := make([]interface{}, len(cols))
+
+	for i := range rawResult {
+		dest[i] = &rawResult[i]
+	}
+
+	for rows.Next() {
+		if err := rows.Scan(dest...); err != nil {
+			log.Printf("%v: db scan err, %v", pgcLogPref, err)
+			return row, err
+		}
+
+		for i, raw := range rawResult {
+			if raw != nil {
+				result[i] = string(raw)
+			} else {
+				result[i] = "\\N"
+			}
+		}
+
+		// result[0] is unique id which is not a part of the report
+		row.AccountID = result[1]
+		row.LineItem = result[2]
+
+		row.StartTime, err = time.Parse(time.RFC3339, result[3])
+		if err != nil {
+			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
+			return row, err
+		}
+
+		row.EndTime, err = time.Parse(time.RFC3339, result[4])
+		if err != nil {
+			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
+			return row, err
+		}
+
+		row.Cost, err = strconv.ParseFloat(result[5], 64)
+		if err != nil {
+			log.Printf("%v: db parse float err, %v", pgcLogPref, err)
+			return row, err
+		}
+
+		row.Currency = result[6]
+		row.ProjectID = result[7]
+		row.Description = result[8]
+	}
+
+	return row, nil
 }
 
 // InsertReport inserts report into db
@@ -190,8 +338,8 @@ func (c *Client) InsertReport(report Report) error {
 	return nil
 }
 
-// DeleteLastReport deletes the last report from db
-func (c *Client) DeleteLastReport() error {
+// deleteLastReport deletes the last report from db
+func (c *Client) deleteLastReport() error {
 	if _, err := c.idb.Query("DELETE FROM xproject.reports WHERE id = (SELECT MAX(id) FROM xproject.reports)"); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
