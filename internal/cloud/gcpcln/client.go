@@ -87,7 +87,7 @@ func (c *Client) CsvObjsList(bktName, prefix string) (objs Objects, err error) {
 }
 
 // CsvObjectContent fetches data from bucket object by bucket name and object name
-func (c *Client) CsvObjectContent(bktName, objName string) ([][]string, error) {
+func (c *Client) csvObjectContent(bktName, objName string) ([][]string, error) {
 	r, err := c.strgCln.Bucket(bktName).Object(objName).NewReader(c.ctx)
 	if err != nil {
 		return nil, fmt.Errorf("fetch object csv data: %v", err)
@@ -100,8 +100,9 @@ func (c *Client) CsvObjectContent(bktName, objName string) ([][]string, error) {
 	return records, nil
 }
 
-func (c *Client) MakeReport(obj Object) (*Report, error) {
-	data, err := c.CsvObjectContent(obj.Bucket, obj.Name)
+// MakeReport creates report from gcp object in cloud for object
+func (c *Client) makeReport(obj Object) (*Report, error) {
+	data, err := c.csvObjectContent(obj.Bucket, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("can not make report: %v", err)
 	}
@@ -118,10 +119,10 @@ func (c *Client) MakeReport(obj Object) (*Report, error) {
 	return &rep, nil
 }
 
-// make Reports for object from GCP bucket
+// MakeReports creates reports from gcp object in cloud for objects range
 func (c *Client) MakeReports(objs Objects) (reps Reports, err error) {
 	for _, o := range objs {
-		r, err := c.MakeReport(o)
+		r, err := c.makeReport(o)
 		if err != nil {
 			return nil, fmt.Errorf("can not make reports: %v", err)
 		}

@@ -2,6 +2,7 @@ package gcpcln
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 )
@@ -47,13 +48,13 @@ func Test_Cleint_CsvObjctsList(t *testing.T) {
 	}
 }
 
-func Test_Client_CsvObjectContent(t *testing.T) {
+func Test_Client_csvObjectContent(t *testing.T) {
 	ctx := context.Background()
 	cln, err := NewClient(ctx)
 	if err != nil {
 		t.Error("Failed to create client:", err)
 	}
-	objCont, err := cln.CsvObjectContent(os.Getenv("APP_PROJECT_BUCKET"),
+	objCont, err := cln.csvObjectContent(os.Getenv("APP_PROJECT_BUCKET"),
 		os.Getenv("APP_PROJECT_CSV_OBJECT"))
 	if err != nil {
 		t.Error("Failed to fetch content", err)
@@ -61,4 +62,27 @@ func Test_Client_CsvObjectContent(t *testing.T) {
 	if len(objCont) == 0 {
 		t.Error("Object content len == 0, exp > 0")
 	}
+}
+
+func Test_Client_makeReport(t *testing.T) {
+	ctx := context.Background()
+	cln, err := NewClient(ctx)
+	if err != nil {
+		t.Error("Failed to create client:", err)
+	}
+
+	obj := Object{
+		Name:   os.Getenv("APP_PROJECT_CSV_OBJECT"),
+		Bucket: os.Getenv("APP_PROJECT_BUCKET")}
+
+	rep, err := cln.makeReport(obj)
+	if err != nil {
+		t.Error("Failed to make report:", err)
+	}
+
+	fmt.Println(rep)
+}
+
+func Test_Client_MakeReports(t *testing.T) {
+
 }
