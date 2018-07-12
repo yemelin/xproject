@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/pavlov-tony/xproject/pkg/cloud/gcpparser"
 	"google.golang.org/api/iterator"
 )
 
@@ -18,6 +19,31 @@ const contentTypeCsv = "text/csv"
 type Client struct {
 	strgCln *storage.Client
 	ctx     context.Context
+}
+
+type Object struct {
+	Name    string
+	Bucket  string
+	Created time.Time
+}
+
+type Objects []Object
+
+type Report struct {
+	Object Object
+	Bills  gcpparser.ServicesBills
+}
+
+type Reports []Report
+
+func (objs Objects) after(t time.Time) (res Objects) {
+	for _, o := range objs {
+		if o.Created.After(t) {
+			res = append(res, o)
+		}
+	}
+
+	return res
 }
 
 // NewClient creates new client for GCP
@@ -52,7 +78,7 @@ func (c *Client) BucketsList(projectID string) (buckets []string, err error) {
 }
 
 // CsvObjectsList fetches csv ojects list from bucket with prefix
-func (c *Client) CsvObjectsList(bktName, prefix string) (objs []string, err error) {
+func (c *Client) CsvObjsList(bktName, prefix string) (objs Objects, err error) {
 
 	it := c.strgCln.Bucket(bktName).Objects(c.ctx, &storage.Query{Prefix: prefix})
 	for {
@@ -64,7 +90,8 @@ func (c *Client) CsvObjectsList(bktName, prefix string) (objs []string, err erro
 			return nil, fmt.Errorf("fetch bucket objects: %v", err)
 		}
 		if o.ContentType == contentTypeCsv {
-			objs = append(objs, o.Name)
+			fmt.Println(o)
+			objs = append(objs, Object{Name: o.Name, Created: o.Created})
 		}
 	}
 
@@ -85,16 +112,33 @@ func (c *Client) CsvObjectContent(bktName, objName string) ([][]string, error) {
 	return records, nil
 }
 
-// Fetch periodically fetches data into db from GCP
-func (c *Client) Fetch(bktName, objName string, dt time.Duration) {
-	for {
-		// select last date from db
+func (c *Client) MakeReport(obj Object) (Report, error) {
+	return
+}
 
-		c.CsvObjectContent(bktName, objName)
-		// TODO: use CsvObjectContent
-		// TODO: parse raw csv content
+func (c *Client) MakeReports(objs Objects) (Reports, error) {
+	return
+}
+
+// Fetch periodically fetches data into db from GCP
+func (c *Client) Fetch(bktName, prefix string, dt time.Duration) {
+	for {
+		// TODO: select last report from db
+		// lastReport := dbclient.getLastReport()
+
+		// select last date from db
+		objs := c.CsvObjsList(bktName, prefix)
+		// objs := objs.after(lastReport.Object.Created)
+
+		reps := c.MakeReports(objs)
+
 		// TODO: use pgcln here to write parsed csv into db
 
 		time.Sleep(dt * time.Hour)
 	}
 }
+
+// select client
+// select Buckets
+// choose bucket
+// fetch from bucket obj with prefix since

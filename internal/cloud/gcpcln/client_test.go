@@ -37,7 +37,8 @@ func Test_Cleint_CsvObjctsList(t *testing.T) {
 	}
 	bktName := os.Getenv("APP_PROJECT_BUCKET")
 	prefix := ""
-	objs, err := cln.CsvObjectsList(bktName, prefix)
+	objs, err := cln.CsvObjsList(bktName, prefix)
+	// fmt.Println(objs)
 	if err != nil {
 		t.Error("Failed to fetch buckets")
 	}
