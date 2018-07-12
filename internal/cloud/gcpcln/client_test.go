@@ -80,9 +80,25 @@ func Test_Client_makeReport(t *testing.T) {
 		t.Error("Failed to make report:", err)
 	}
 
-	fmt.Println(rep)
+	if len(rep.Bills) == 0 {
+		// TODO: add test
+		t.Error("error")
+	}
 }
 
 func Test_Client_MakeReports(t *testing.T) {
+	ctx := context.Background()
+	cln, err := NewClient(ctx)
+	if err != nil {
+		t.Error("Failed to create client:", err)
+	}
 
+	bktName := os.Getenv("APP_PROJECT_BUCKET")
+	prefix := ""
+	objs, err := cln.CsvObjsList(bktName, prefix)
+
+	reps, err := cln.MakeReports(objs)
+	fmt.Println(reps[6].Object)
+	fmt.Println(reps[6].Bills[0].Cost)
+	// TODO: add test
 }

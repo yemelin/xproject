@@ -79,7 +79,7 @@ func (c *Client) CsvObjsList(bktName, prefix string) (objs Objects, err error) {
 			return nil, fmt.Errorf("fetch bucket objects: %v", err)
 		}
 		if o.ContentType == contentTypeCsv {
-			objs = append(objs, Object{Name: o.Name, Created: o.Created})
+			objs = append(objs, Object{Name: o.Name, Bucket: o.Bucket, Created: o.Created})
 		}
 	}
 
