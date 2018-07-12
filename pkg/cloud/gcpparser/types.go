@@ -2,7 +2,7 @@ package gcpparser
 
 import "time"
 
-// gcp csv billing file's columns numbers
+// targCols uses for store gcp csv billing file's columns numbers
 type targCols struct {
 	ColLineItem    int64 `gcpcsv:"Line Item"`
 	ColStartTime   int64 `gcpcsv:"Start Time"`
@@ -11,7 +11,6 @@ type targCols struct {
 	ColCurrency    int64 `gcpcsv:"Currency"`
 	ColProjectID   int64 `gcpcsv:"Project ID"`
 	ColDescription int64 `gcpcsv:"Description"`
-	// MaxColNum      = 20
 }
 
 // ServiceBill represent a composition of main service fields from gcp billing csv file

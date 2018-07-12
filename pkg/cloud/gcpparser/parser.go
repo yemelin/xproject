@@ -26,7 +26,6 @@ func Parse(data [][]string) (res ServicesBills, err error) {
 }
 
 // parseLine need for parse row from GCP csv billing file
-// FIXME: Files length may differ
 func parseLine(line []string, tg *targCols) (*ServiceBill, error) {
 
 	st, err := time.Parse(time.RFC3339, line[tg.ColStartTime])
@@ -55,6 +54,7 @@ func parseLine(line []string, tg *targCols) (*ServiceBill, error) {
 	return &sb, nil
 }
 
+// markCols uses for mark main columns in csv file
 func markCols(headers []string) (*targCols, error) {
 
 	tg := new(targCols)
