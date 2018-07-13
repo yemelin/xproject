@@ -9,8 +9,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Test_SelectReportsByTime checks if SelectReportsByTime() returns reports from non-empty db
-func Test_SelectReportsByTime(t *testing.T) {
+// Test_SelectBillsByTime checks if SelectBillsByTime() returns bills from non-empty db
+func Test_SelectBillsByTime(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
@@ -33,18 +33,18 @@ func Test_SelectReportsByTime(t *testing.T) {
 
 	end := time.Now()
 
-	reports, err := pgcln.SelectReportsByTime(start, end)
+	bills, err := pgcln.SelectBillsByTime(start, end)
 	if err != nil {
-		t.Fatalf("%v: select reports err: %v", pgcLogPref, err)
+		t.Fatalf("%v: select bills err: %v", pgcLogPref, err)
 	}
 
-	if len(reports) == 0 {
-		t.Fatalf("%v: no reports selected", pgcLogPref)
+	if len(bills) == 0 {
+		t.Fatalf("%v: no bills selected", pgcLogPref)
 	}
 }
 
-// Test_InsertReport_deleteLastReport tests inserting report into db, selecting it by service and deleting it
-func Test_InsertReport_deleteLastReport(t *testing.T) {
+// Test_InsertBill_deleteLastBill tests inserting bill into db, selecting it by service and deleting it
+func Test_InsertBill_deleteLastBill(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
@@ -60,50 +60,51 @@ func Test_InsertReport_deleteLastReport(t *testing.T) {
 	}
 	defer pgcln.Close()
 
-	testReport := Report{
-		AccountID:   "testAccount",
-		LineItem:    "testItem",
-		StartTime:   time.Now(),
-		EndTime:     time.Now(),
-		Cost:        123.456,
-		Currency:    "testCurrency",
-		ProjectID:   "testProject",
-		Description: "testDescription",
+	testBill := ServiceBill{
+		ID:           1,
+		LineItem:     "testItem",
+		StartTime:    time.Now(),
+		EndTime:      time.Now(),
+		Cost:         123.456,
+		Currency:     "testCurrency",
+		ProjectID:    "testProject",
+		Description:  "testDescription",
+		GcpCsvFileID: 1,
 	}
 
-	if err := pgcln.InsertReport(testReport); err != nil {
-		t.Fatalf("%v: insert report err: %v", pgcLogPref, err)
+	if err := pgcln.InsertBill(testBill); err != nil {
+		t.Fatalf("%v: insert bill err: %v", pgcLogPref, err)
 	}
 
-	reports, err := pgcln.SelectReportsByService("testItem")
+	bills, err := pgcln.SelectBillsByService("testItem")
 	if err != nil {
-		t.Fatalf("%v: select reports err: %v", pgcLogPref, err)
+		t.Fatalf("%v: select bills err: %v", pgcLogPref, err)
 	}
 
-	if len(reports) != 1 {
-		t.Fatalf("%v: incorrect selection, expected 1 report", pgcLogPref)
+	if len(bills) != 1 {
+		t.Fatalf("%v: incorrect selection, expected 1 bill", pgcLogPref)
 	}
 
-	if strings.Compare(reports[0].AccountID, "testAccount") != 0 || strings.Compare(reports[0].ProjectID, "testProject") != 0 {
-		t.Fatalf("%v: selected report doesn't match the test report", pgcLogPref)
+	if strings.Compare(bills[0].LineItem, "testItem") != 0 && strings.Compare(bills[0].ProjectID, "testProject") != 0 {
+		t.Fatalf("%v: selected bill doesn't match the test bill", pgcLogPref)
 	}
 
-	if err := pgcln.deleteLastReport(); err != nil {
-		t.Fatalf("%v: delete last report err: %v", pgcLogPref, err)
+	if err := pgcln.deleteLastBill(); err != nil {
+		t.Fatalf("%v: delete last bill err: %v", pgcLogPref, err)
 	}
 
-	reports, err = pgcln.SelectReportsByService("testItem")
+	bills, err = pgcln.SelectBillsByService("testItem")
 	if err != nil {
-		t.Fatalf("%v: select reports err: %v", pgcLogPref, err)
+		t.Fatalf("%v: select bills err: %v", pgcLogPref, err)
 	}
 
-	if len(reports) != 0 {
-		t.Fatalf("%v: incorrect selection, expected 0 reports", pgcLogPref)
+	if len(bills) != 0 {
+		t.Fatalf("%v: incorrect selection, expected 0 bills", pgcLogPref)
 	}
 }
 
-// Test_SelectLastReport checks if SelectLastReport() returns the last report based on test data from db
-func Test_SelectLastReport(t *testing.T) {
+// Test_SelectLastBill checks if SelectLastBill() returns the last bill based on test data from db
+func Test_SelectLastBill(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
@@ -119,12 +120,12 @@ func Test_SelectLastReport(t *testing.T) {
 	}
 	defer pgcln.Close()
 
-	report, err := pgcln.SelectLastReport()
+	bill, err := pgcln.SelectLastBill()
 	if err != nil {
-		t.Fatalf("%v: select reports err: %v", pgcLogPref, err)
+		t.Fatalf("%v: select bills err: %v", pgcLogPref, err)
 	}
 
-	if strings.Compare(report.ProjectID, "proj-2-205013") != 0 {
+	if strings.Compare(bill.ProjectID, "test_project") != 0 {
 		t.Fatalf("%v: incorrect selection", pgcLogPref)
 	}
 }

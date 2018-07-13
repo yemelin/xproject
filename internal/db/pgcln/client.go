@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	pgcLogPref = "postgres client"
-	dbColumns  = 9
+	pgcLogPref          = "postgres client"
+	serviceBillsColumns = 9
 )
 
 // Env for testing
@@ -43,18 +43,40 @@ type Client struct {
 	idb IDB
 }
 
-// Report represents the structure of CSV file
-// CSV file used as example: https://storage.googleapis.com/churomann-bucket/test-2018-05-23.csv
-type Report struct {
-	AccountID   string    `csv:"Account ID"`
-	LineItem    string    `csv:"Line Item"`
-	StartTime   time.Time `csv:"Start Time"`
-	EndTime     time.Time `csv:"End Time"`
-	Cost        float64   `csv:"Cost"`
-	Currency    string    `csv:"Currency"`
-	ProjectID   string    `csv:"Project ID"`
-	Description string    `csv:"Description"`
+// Account contains information about GCP user account
+type Account struct {
+	ID             int
+	GcpAccountInfo string
 }
+
+// GcpCsvFile contains information about CSV files with billing reports
+type GcpCsvFile struct {
+	ID           int
+	LineItem     string
+	StartTime    time.Time
+	EndTime      time.Time
+	Cost         float64
+	Currency     string
+	ProjectID    string
+	Description  string
+	GcpCsvFileID int
+}
+
+// ServiceBill contains relevant information from billing report
+type ServiceBill struct {
+	ID           int
+	LineItem     string
+	StartTime    time.Time
+	EndTime      time.Time
+	Cost         float64
+	Currency     string
+	ProjectID    string
+	Description  string
+	GcpCsvFileID int
+}
+
+// ServiceBills is a set of ServiceBill
+type ServiceBills []*ServiceBill
 
 // New inits client
 func New(conf Config) (*Client, error) {
@@ -89,13 +111,13 @@ func (c *Client) Ping() error {
 	return c.idb.Ping()
 }
 
-// SelectReportsByTime returns reports from db that belong to specified time period
-func (c *Client) SelectReportsByTime(start, end time.Time) ([]Report, error) {
+// SelectBillsByTime returns bills from db that belong to specified time period
+func (c *Client) SelectBillsByTime(start, end time.Time) (ServiceBills, error) {
 	if start.After(end) || end.Before(start) {
 		return nil, fmt.Errorf("%v: invalid arguments err", pgcLogPref)
 	}
 
-	rows, err := c.idb.Query("SELECT * FROM xproject.reports ORDER BY id ASC")
+	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills ORDER BY id ASC")
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -107,12 +129,12 @@ func (c *Client) SelectReportsByTime(start, end time.Time) ([]Report, error) {
 		return nil, err
 	}
 
-	if len(cols) != dbColumns {
-		return nil, fmt.Errorf("%v: db format doesn't match Report struct", pgcLogPref)
+	if len(cols) != serviceBillsColumns {
+		return nil, fmt.Errorf("%v: db format doesn't match ServiceBill struct", pgcLogPref)
 	}
 
-	var table []Report
-	var row Report
+	var table ServiceBills
+	var row ServiceBill
 
 	result := make([]string, len(cols))
 	rawResult := make([][]byte, len(cols))
@@ -136,17 +158,21 @@ func (c *Client) SelectReportsByTime(start, end time.Time) ([]Report, error) {
 			}
 		}
 
-		// result[0] is unique id which is not a part of the report
-		row.AccountID = result[1]
-		row.LineItem = result[2]
+		row.ID, err = strconv.Atoi(result[0])
+		if err != nil {
+			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
+			return nil, err
+		}
 
-		row.StartTime, err = time.Parse(time.RFC3339, result[3])
+		row.LineItem = result[1]
+
+		row.StartTime, err = time.Parse(time.RFC3339, result[2])
 		if err != nil {
 			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
 			return nil, err
 		}
 
-		row.EndTime, err = time.Parse(time.RFC3339, result[4])
+		row.EndTime, err = time.Parse(time.RFC3339, result[3])
 		if err != nil {
 			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
 			return nil, err
@@ -156,26 +182,31 @@ func (c *Client) SelectReportsByTime(start, end time.Time) ([]Report, error) {
 			continue
 		}
 
-		row.Cost, err = strconv.ParseFloat(result[5], 64)
+		row.Cost, err = strconv.ParseFloat(result[4], 64)
 		if err != nil {
 			log.Printf("%v: db parse float err, %v", pgcLogPref, err)
 			return nil, err
 		}
 
-		row.Currency = result[6]
-		row.ProjectID = result[7]
-		row.Description = result[8]
+		row.Currency = result[5]
+		row.ProjectID = result[6]
+		row.Description = result[7]
+		row.GcpCsvFileID, err = strconv.Atoi(result[8])
+		if err != nil {
+			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
+			return nil, err
+		}
 
-		table = append(table, row)
+		table = append(table, &row)
 	}
 
 	return table, nil
 }
 
-// SelectReportsByService returns reports from db that are related to specified GCP service
-// If service is an empty string then all reports will be returned
-func (c *Client) SelectReportsByService(service string) ([]Report, error) {
-	rows, err := c.idb.Query("SELECT * FROM xproject.reports WHERE line_item LIKE '%" + service + "%' ORDER BY id ASC")
+// SelectBillsByService returns bills from db that are related to specified GCP service
+// If service is an empty string then all bills will be returned
+func (c *Client) SelectBillsByService(service string) (ServiceBills, error) {
+	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills WHERE line_item LIKE '%" + service + "%' ORDER BY id ASC")
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -187,12 +218,12 @@ func (c *Client) SelectReportsByService(service string) ([]Report, error) {
 		return nil, err
 	}
 
-	if len(cols) != dbColumns {
-		return nil, fmt.Errorf("%v: db format doesn't match Report struct", pgcLogPref)
+	if len(cols) != serviceBillsColumns {
+		return nil, fmt.Errorf("%v: db format doesn't match ServiceBill struct", pgcLogPref)
 	}
 
-	var table []Report
-	var row Report
+	var table ServiceBills
+	var row ServiceBill
 
 	result := make([]string, len(cols))
 	rawResult := make([][]byte, len(cols))
@@ -216,43 +247,52 @@ func (c *Client) SelectReportsByService(service string) ([]Report, error) {
 			}
 		}
 
-		// result[0] is unique id which is not a part of the report
-		row.AccountID = result[1]
-		row.LineItem = result[2]
+		row.ID, err = strconv.Atoi(result[0])
+		if err != nil {
+			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
+			return nil, err
+		}
 
-		row.StartTime, err = time.Parse(time.RFC3339, result[3])
+		row.LineItem = result[1]
+
+		row.StartTime, err = time.Parse(time.RFC3339, result[2])
 		if err != nil {
 			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
 			return nil, err
 		}
 
-		row.EndTime, err = time.Parse(time.RFC3339, result[4])
+		row.EndTime, err = time.Parse(time.RFC3339, result[3])
 		if err != nil {
 			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
 			return nil, err
 		}
 
-		row.Cost, err = strconv.ParseFloat(result[5], 64)
+		row.Cost, err = strconv.ParseFloat(result[4], 64)
 		if err != nil {
 			log.Printf("%v: db parse float err, %v", pgcLogPref, err)
 			return nil, err
 		}
 
-		row.Currency = result[6]
-		row.ProjectID = result[7]
-		row.Description = result[8]
+		row.Currency = result[5]
+		row.ProjectID = result[6]
+		row.Description = result[7]
+		row.GcpCsvFileID, err = strconv.Atoi(result[8])
+		if err != nil {
+			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
+			return nil, err
+		}
 
-		table = append(table, row)
+		table = append(table, &row)
 	}
 
 	return table, nil
 }
 
-// SelectLastReport returns pointer to the latest added report from db
-func (c *Client) SelectLastReport() (Report, error) {
-	var row Report
+// SelectLastBill returns the latest added bill from db
+func (c *Client) SelectLastBill() (ServiceBill, error) {
+	var row ServiceBill
 
-	rows, err := c.idb.Query("SELECT * FROM xproject.reports WHERE id = (SELECT MAX(id) FROM xproject.reports)")
+	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills WHERE id = (SELECT MAX(id) FROM xproject.service_bills)")
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return row, err
@@ -264,8 +304,8 @@ func (c *Client) SelectLastReport() (Report, error) {
 		return row, err
 	}
 
-	if len(cols) != dbColumns {
-		return row, fmt.Errorf("%v: db format doesn't match Report struct", pgcLogPref)
+	if len(cols) != serviceBillsColumns {
+		return row, fmt.Errorf("%v: db format doesn't match ServiceBill struct", pgcLogPref)
 	}
 
 	result := make([]string, len(cols))
@@ -290,47 +330,56 @@ func (c *Client) SelectLastReport() (Report, error) {
 			}
 		}
 
-		// result[0] is unique id which is not a part of the report
-		row.AccountID = result[1]
-		row.LineItem = result[2]
+		row.ID, err = strconv.Atoi(result[0])
+		if err != nil {
+			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
+			return row, err
+		}
 
-		row.StartTime, err = time.Parse(time.RFC3339, result[3])
+		row.LineItem = result[1]
+
+		row.StartTime, err = time.Parse(time.RFC3339, result[2])
 		if err != nil {
 			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
 			return row, err
 		}
 
-		row.EndTime, err = time.Parse(time.RFC3339, result[4])
+		row.EndTime, err = time.Parse(time.RFC3339, result[3])
 		if err != nil {
 			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
 			return row, err
 		}
 
-		row.Cost, err = strconv.ParseFloat(result[5], 64)
+		row.Cost, err = strconv.ParseFloat(result[4], 64)
 		if err != nil {
 			log.Printf("%v: db parse float err, %v", pgcLogPref, err)
 			return row, err
 		}
 
-		row.Currency = result[6]
-		row.ProjectID = result[7]
-		row.Description = result[8]
+		row.Currency = result[5]
+		row.ProjectID = result[6]
+		row.Description = result[7]
+		row.GcpCsvFileID, err = strconv.Atoi(result[8])
+		if err != nil {
+			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
+			return row, err
+		}
 	}
 
 	return row, nil
 }
 
-// InsertReport inserts report into db
-func (c *Client) InsertReport(report Report) error {
-	if _, err := c.idb.Query("INSERT INTO xproject.reports VALUES(DEFAULT, '" +
-		report.AccountID + "', '" +
-		report.LineItem + "', '" +
-		report.StartTime.Format(time.RFC3339) + "', '" +
-		report.EndTime.Format(time.RFC3339) + "', " +
-		strconv.FormatFloat(report.Cost, 'f', 6, 64) + ", '" +
-		report.Currency + "', '" +
-		report.ProjectID + "', '" +
-		report.Description + "')"); err != nil {
+// InsertBill inserts bill into db
+func (c *Client) InsertBill(bill ServiceBill) error {
+	if _, err := c.idb.Query("INSERT INTO xproject.service_bills VALUES(DEFAULT, '" +
+		bill.LineItem + "', TIMESTAMP '" +
+		bill.StartTime.Format(time.RFC3339) + "', TIMESTAMP '" +
+		bill.EndTime.Format(time.RFC3339) + "', " +
+		strconv.FormatFloat(bill.Cost, 'f', 6, 64) + ", '" +
+		bill.Currency + "', '" +
+		bill.ProjectID + "', '" +
+		bill.Description + "', " +
+		strconv.Itoa(bill.GcpCsvFileID) + ")"); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -338,9 +387,9 @@ func (c *Client) InsertReport(report Report) error {
 	return nil
 }
 
-// deleteLastReport deletes the last report from db
-func (c *Client) deleteLastReport() error {
-	if _, err := c.idb.Query("DELETE FROM xproject.reports WHERE id = (SELECT MAX(id) FROM xproject.reports)"); err != nil {
+// deleteLastBill deletes the latest added bill from db
+func (c *Client) deleteLastBill() error {
+	if _, err := c.idb.Query("DELETE FROM xproject.service_bills WHERE id = (SELECT MAX(id) FROM xproject.service_bills)"); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
