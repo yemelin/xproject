@@ -12,6 +12,8 @@ import (
 
 const (
 	pgcLogPref          = "postgres client"
+	accountsColumns     = 2
+	csvFilesColumns     = 5
 	serviceBillsColumns = 9
 )
 
@@ -71,6 +73,12 @@ type ServiceBill struct {
 	GcpCsvFileID int
 }
 
+// Accounts is a set of Account
+type Accounts []*Account
+
+// GcpCsvFiles is a set of GcpCsvFile
+type GcpCsvFiles []*GcpCsvFile
+
 // ServiceBills is a set of ServiceBill
 type ServiceBills []*ServiceBill
 
@@ -105,6 +113,174 @@ func (c *Client) Close() error {
 // Ping tests ping to db
 func (c *Client) Ping() error {
 	return c.idb.Ping()
+}
+
+// SelectAccounts returns all accounts from db
+func (c *Client) SelectAccounts() (Accounts, error) {
+	rows, err := c.idb.Query("SELECT * FROM xproject.accounts ORDER BY id ASC")
+	if err != nil {
+		log.Printf("%v: db query err, %v", pgcLogPref, err)
+		return nil, err
+	}
+
+	cols, err := rows.Columns()
+	if err != nil {
+		log.Printf("%v: db columns err, %v", pgcLogPref, err)
+		return nil, err
+	}
+
+	if len(cols) != accountsColumns {
+		return nil, fmt.Errorf("%v: db format doesn't match Account struct", pgcLogPref)
+	}
+
+	var table Accounts
+	var row Account
+
+	result := make([]string, len(cols))
+	rawResult := make([][]byte, len(cols))
+	dest := make([]interface{}, len(cols))
+
+	for i := range rawResult {
+		dest[i] = &rawResult[i]
+	}
+
+	for rows.Next() {
+		if err := rows.Scan(dest...); err != nil {
+			log.Printf("%v: db scan err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		for i, raw := range rawResult {
+			if raw != nil {
+				result[i] = string(raw)
+			} else {
+				result[i] = "\\N"
+			}
+		}
+
+		row.ID, err = strconv.Atoi(result[0])
+		if err != nil {
+			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		row.GcpAccountInfo = result[1]
+
+		table = append(table, &row)
+	}
+
+	return table, nil
+}
+
+// InsertAccount inserts Account into db
+func (c *Client) InsertAccount(account Account) error {
+	if _, err := c.idb.Query("INSERT INTO xproject.accounts VALUES(DEFAULT, $1)",
+		account.GcpAccountInfo); err != nil {
+		log.Printf("%v: db query err, %v", pgcLogPref, err)
+		return err
+	}
+
+	return nil
+}
+
+// deleteLastAccount deletes the latest added account from db
+func (c *Client) deleteLastAccount() error {
+	if _, err := c.idb.Query("DELETE FROM xproject.accounts WHERE id = (SELECT MAX(id) FROM xproject.accounts)"); err != nil {
+		log.Printf("%v: db query err, %v", pgcLogPref, err)
+		return err
+	}
+
+	return nil
+}
+
+// SelectCsvFiles returns all CSV files from db
+func (c *Client) SelectCsvFiles() (GcpCsvFiles, error) {
+	rows, err := c.idb.Query("SELECT * FROM xproject.gcp_csv_files ORDER BY id ASC")
+	if err != nil {
+		log.Printf("%v: db query err, %v", pgcLogPref, err)
+		return nil, err
+	}
+
+	cols, err := rows.Columns()
+	if err != nil {
+		log.Printf("%v: db columns err, %v", pgcLogPref, err)
+		return nil, err
+	}
+
+	if len(cols) != csvFilesColumns {
+		return nil, fmt.Errorf("%v: db format doesn't match GcpCsvFile struct", pgcLogPref)
+	}
+
+	var table GcpCsvFiles
+	var row GcpCsvFile
+
+	result := make([]string, len(cols))
+	rawResult := make([][]byte, len(cols))
+	dest := make([]interface{}, len(cols))
+
+	for i := range rawResult {
+		dest[i] = &rawResult[i]
+	}
+
+	for rows.Next() {
+		if err := rows.Scan(dest...); err != nil {
+			log.Printf("%v: db scan err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		for i, raw := range rawResult {
+			if raw != nil {
+				result[i] = string(raw)
+			} else {
+				result[i] = "\\N"
+			}
+		}
+
+		row.ID, err = strconv.Atoi(result[0])
+		if err != nil {
+			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		row.Name = result[1]
+		row.Bucket = result[2]
+		row.TimeCreated, err = time.Parse(time.RFC3339, result[3])
+		if err != nil {
+			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		row.AccountID, err = strconv.Atoi(result[4])
+		if err != nil {
+			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		table = append(table, &row)
+	}
+
+	return table, nil
+}
+
+// InsertCsvFile inserts CSV file into db
+func (c *Client) InsertCsvFile(file GcpCsvFile) error {
+	if _, err := c.idb.Query("INSERT INTO xproject.gcp_csv_files VALUES(DEFAULT, $1, $2, $3, $4)",
+		file.Name, file.Bucket, file.TimeCreated, file.AccountID); err != nil {
+		log.Printf("%v: db query err, %v", pgcLogPref, err)
+		return err
+	}
+
+	return nil
+}
+
+// deleteLastCsvFile deletes the latest added CSV file from db
+func (c *Client) deleteLastCsvFile() error {
+	if _, err := c.idb.Query("DELETE FROM xproject.gcp_csv_files WHERE id = (SELECT MAX(id) FROM xproject.gcp_csv_files)"); err != nil {
+		log.Printf("%v: db query err, %v", pgcLogPref, err)
+		return err
+	}
+
+	return nil
 }
 
 // SelectBillsByTime returns bills from db that belong to specified time period
@@ -202,7 +378,9 @@ func (c *Client) SelectBillsByTime(start, end time.Time) (ServiceBills, error) {
 // SelectBillsByService returns bills from db that are related to specified GCP service
 // If service is an empty string then all bills will be returned
 func (c *Client) SelectBillsByService(service string) (ServiceBills, error) {
-	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills WHERE line_item LIKE '%" + service + "%' ORDER BY id ASC")
+	service = "%" + service + "%"
+
+	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills WHERE line_item LIKE $1 ORDER BY id ASC", service)
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -367,15 +545,8 @@ func (c *Client) SelectLastBill() (ServiceBill, error) {
 
 // InsertBill inserts bill into db
 func (c *Client) InsertBill(bill ServiceBill) error {
-	if _, err := c.idb.Query("INSERT INTO xproject.service_bills VALUES(DEFAULT, '" +
-		bill.LineItem + "', TIMESTAMP '" +
-		bill.StartTime.Format(time.RFC3339) + "', TIMESTAMP '" +
-		bill.EndTime.Format(time.RFC3339) + "', " +
-		strconv.FormatFloat(bill.Cost, 'f', 6, 64) + ", '" +
-		bill.Currency + "', '" +
-		bill.ProjectID + "', '" +
-		bill.Description + "', " +
-		strconv.Itoa(bill.GcpCsvFileID) + ")"); err != nil {
+	if _, err := c.idb.Query("INSERT INTO xproject.service_bills VALUES(DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8)",
+		bill.LineItem, bill.StartTime, bill.EndTime, bill.Cost, bill.Currency, bill.ProjectID, bill.Description, bill.GcpCsvFileID); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
