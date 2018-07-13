@@ -51,15 +51,11 @@ type Account struct {
 
 // GcpCsvFile contains information about CSV files with billing reports
 type GcpCsvFile struct {
-	ID           int
-	LineItem     string
-	StartTime    time.Time
-	EndTime      time.Time
-	Cost         float64
-	Currency     string
-	ProjectID    string
-	Description  string
-	GcpCsvFileID int
+	ID          int
+	Name        string
+	Bucket      string
+	TimeCreated time.Time
+	AccountID   int
 }
 
 // ServiceBill contains relevant information from billing report
