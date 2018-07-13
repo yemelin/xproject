@@ -172,7 +172,7 @@ func (c *Client) SelectAccounts() (Accounts, error) {
 	return table, nil
 }
 
-// InsertAccount inserts Account into db
+// InsertAccount inserts account into db
 func (c *Client) InsertAccount(account Account) error {
 	if _, err := c.idb.Query("INSERT INTO xproject.accounts VALUES(DEFAULT, $1)",
 		account.GcpAccountInfo); err != nil {
