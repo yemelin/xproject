@@ -53,6 +53,7 @@ func main() {
 		err := fasthttp.Serve(gl, router.Handler)
 		if err != nil {
 			log.Println(err)
+			stop <- syscall.SIGINT
 		}
 	}()
 
