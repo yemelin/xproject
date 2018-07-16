@@ -1,6 +1,6 @@
 include build/package/dev_config.env
 
-PROOT=/go/src/github.com/pavlov-tony/xproject
+PROOT=/go/src/github.com/yemelin/xproject
 # image name for docker
 IMAGE_NAME=xproject
 

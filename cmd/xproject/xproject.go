@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/pavlov-tony/xproject/internal/handlers"
+	"github.com/yemelin/xproject/internal/handlers"
 
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
