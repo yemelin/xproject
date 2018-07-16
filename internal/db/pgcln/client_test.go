@@ -41,11 +41,11 @@ func Test_Account(t *testing.T) {
 	}
 
 	if len(accounts) != 2 {
-		t.Fatalf("%v: incorrect selection, expected 2 accounts", pgcLogPref)
+		t.Fatalf("%v: incorrect selection, expected 2 accounts, not %v", pgcLogPref, len(accounts))
 	}
 
 	if strings.Compare(accounts[0].GcpAccountInfo, "testInfo") != 0 {
-		t.Fatalf("%v: selected account doesn't match the test account", pgcLogPref)
+		t.Fatalf("%v: selected account's info doesn't match the test account", pgcLogPref)
 	}
 
 	if err := pgcln.deleteLastAccount(); err != nil {
@@ -58,7 +58,7 @@ func Test_Account(t *testing.T) {
 	}
 
 	if len(accounts) != 1 {
-		t.Fatalf("%v: incorrect selection, expected 1 account", pgcLogPref)
+		t.Fatalf("%v: incorrect selection, expected 1 account, not %v", pgcLogPref, len(accounts))
 	}
 }
 
@@ -97,11 +97,11 @@ func Test_CsvFile(t *testing.T) {
 	}
 
 	if len(csvFiles) != 2 {
-		t.Fatalf("%v: incorrect selection, expected 2 csv files", pgcLogPref)
+		t.Fatalf("%v: incorrect selection, expected 2 csv files, not %v", pgcLogPref, len(csvFiles))
 	}
 
 	if strings.Compare(csvFiles[0].Name, "testName") != 0 {
-		t.Fatalf("%v: selected csv file doesn't match the test csv file", pgcLogPref)
+		t.Fatalf("%v: selected csv file's name doesn't match the test csv file", pgcLogPref)
 	}
 
 	if err := pgcln.deleteLastCsvFile(); err != nil {
@@ -114,7 +114,7 @@ func Test_CsvFile(t *testing.T) {
 	}
 
 	if len(csvFiles) != 1 {
-		t.Fatalf("%v: incorrect selection, expected 1 csv file", pgcLogPref)
+		t.Fatalf("%v: incorrect selection, expected 1 csv file, not %v", pgcLogPref, len(csvFiles))
 	}
 }
 
@@ -148,11 +148,11 @@ func Test_SelectBillsByTime(t *testing.T) {
 	}
 
 	if len(bills) == 0 {
-		t.Fatalf("%v: no bills selected", pgcLogPref)
+		t.Fatalf("%v: expected non-empty selection, but no bills were selected", pgcLogPref)
 	}
 
 	if strings.Compare(bills[0].LineItem, "test_service") != 0 {
-		t.Fatalf("%v: incorrect selection", pgcLogPref)
+		t.Fatalf("%v: selected bill's line item doesn't match 'test_service'", pgcLogPref)
 	}
 }
 
@@ -195,11 +195,11 @@ func Test_InsertBill_deleteLastBill(t *testing.T) {
 	}
 
 	if len(bills) != 1 {
-		t.Fatalf("%v: incorrect selection, expected 1 bill", pgcLogPref)
+		t.Fatalf("%v: incorrect selection, expected 1 bill, not %v", pgcLogPref, len(bills))
 	}
 
 	if strings.Compare(bills[0].LineItem, "testItem") != 0 || strings.Compare(bills[0].ProjectID, "testProject") != 0 {
-		t.Fatalf("%v: selected bill doesn't match the test bill", pgcLogPref)
+		t.Fatalf("%v: selected bill's line item doesn't match the test bill", pgcLogPref)
 	}
 
 	if err := pgcln.deleteLastBill(); err != nil {
@@ -212,7 +212,7 @@ func Test_InsertBill_deleteLastBill(t *testing.T) {
 	}
 
 	if len(bills) != 0 {
-		t.Fatalf("%v: incorrect selection, expected 0 bills", pgcLogPref)
+		t.Fatalf("%v: incorrect selection, expected 0 bills, not %v", pgcLogPref, len(bills))
 	}
 }
 
@@ -239,6 +239,6 @@ func Test_SelectLastBill(t *testing.T) {
 	}
 
 	if strings.Compare(bill.ProjectID, "test_project") != 0 {
-		t.Fatalf("%v: incorrect selection", pgcLogPref)
+		t.Fatalf("%v: selected bill's project id doesn't match 'test_project'", pgcLogPref)
 	}
 }
