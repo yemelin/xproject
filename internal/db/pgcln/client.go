@@ -10,10 +10,7 @@ import (
 )
 
 const (
-	pgcLogPref          = "postgres client"
-	accountsColumns     = 2
-	csvFilesColumns     = 5
-	serviceBillsColumns = 9
+	pgcLogPref = "postgres client"
 )
 
 // Env for testing
@@ -123,16 +120,6 @@ func (c *Client) SelectAccounts() (Accounts, error) {
 	}
 	defer rows.Close()
 
-	cols, err := rows.Columns()
-	if err != nil {
-		log.Printf("%v: db columns err, %v", pgcLogPref, err)
-		return nil, err
-	}
-
-	if len(cols) != accountsColumns {
-		return nil, fmt.Errorf("%v: db format doesn't match Account struct", pgcLogPref)
-	}
-
 	var table Accounts
 	var row Account
 
@@ -177,16 +164,6 @@ func (c *Client) SelectCsvFiles() (GcpCsvFiles, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
-	cols, err := rows.Columns()
-	if err != nil {
-		log.Printf("%v: db columns err, %v", pgcLogPref, err)
-		return nil, err
-	}
-
-	if len(cols) != csvFilesColumns {
-		return nil, fmt.Errorf("%v: db format doesn't match GcpCsvFile struct", pgcLogPref)
-	}
 
 	var table GcpCsvFiles
 	var row GcpCsvFile
@@ -237,16 +214,6 @@ func (c *Client) SelectBillsByTime(start, end time.Time) (ServiceBills, error) {
 	}
 	defer rows.Close()
 
-	cols, err := rows.Columns()
-	if err != nil {
-		log.Printf("%v: db columns err, %v", pgcLogPref, err)
-		return nil, err
-	}
-
-	if len(cols) != serviceBillsColumns {
-		return nil, fmt.Errorf("%v: db format doesn't match ServiceBill struct", pgcLogPref)
-	}
-
 	var table ServiceBills
 	var row ServiceBill
 
@@ -274,16 +241,6 @@ func (c *Client) SelectBillsByService(service string) (ServiceBills, error) {
 	}
 	defer rows.Close()
 
-	cols, err := rows.Columns()
-	if err != nil {
-		log.Printf("%v: db columns err, %v", pgcLogPref, err)
-		return nil, err
-	}
-
-	if len(cols) != serviceBillsColumns {
-		return nil, fmt.Errorf("%v: db format doesn't match ServiceBill struct", pgcLogPref)
-	}
-
 	var table ServiceBills
 	var row ServiceBill
 
@@ -309,16 +266,6 @@ func (c *Client) SelectLastBill() (ServiceBill, error) {
 		return row, err
 	}
 	defer rows.Close()
-
-	cols, err := rows.Columns()
-	if err != nil {
-		log.Printf("%v: db columns err, %v", pgcLogPref, err)
-		return row, err
-	}
-
-	if len(cols) != serviceBillsColumns {
-		return row, fmt.Errorf("%v: db format doesn't match ServiceBill struct", pgcLogPref)
-	}
 
 	for rows.Next() {
 		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
