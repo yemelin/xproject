@@ -9,8 +9,18 @@ import (
 
 // Parse need for parse full GCP csv billing file
 func Parse(data [][]string) (res ServicesBills, err error) {
+	if data == nil {
+		return nil, fmt.Errorf("parse: data == nil")
+	}
+	if len(data) == 0 {
+		return nil, fmt.Errorf("parse: data len == 0")
+	}
+
 	// mark header targets
 	tg, err := markCols(data[0])
+	if err != nil {
+		return nil, fmt.Errorf("parse: error in markCols: %v", err)
+	}
 	// skip headers
 	data = data[1:]
 
