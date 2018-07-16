@@ -289,7 +289,7 @@ func (c *Client) SelectBillsByTime(start, end time.Time) (ServiceBills, error) {
 		return nil, fmt.Errorf("%v: invalid arguments err", pgcLogPref)
 	}
 
-	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills ORDER BY id ASC")
+	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills WHERE start_time >= $1 AND end_time <= $2 ORDER BY id ASC", start, end)
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -348,10 +348,6 @@ func (c *Client) SelectBillsByTime(start, end time.Time) (ServiceBills, error) {
 		if err != nil {
 			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
 			return nil, err
-		}
-
-		if row.StartTime.Before(start) || row.EndTime.After(end) {
-			continue
 		}
 
 		row.Cost, err = strconv.ParseFloat(result[4], 64)

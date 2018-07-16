@@ -150,6 +150,10 @@ func Test_SelectBillsByTime(t *testing.T) {
 	if len(bills) == 0 {
 		t.Fatalf("%v: no bills selected", pgcLogPref)
 	}
+
+	if strings.Compare(bills[0].LineItem, "test_service") != 0 {
+		t.Fatalf("%v: incorrect selection", pgcLogPref)
+	}
 }
 
 // Test_InsertBill_deleteLastBill tests inserting bill into db, selecting it by service and deleting it
