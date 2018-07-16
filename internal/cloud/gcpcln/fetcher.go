@@ -15,6 +15,7 @@ func (c *Client) Fetch(bktName, prefix string, dt time.Duration) {
 		}
 
 		// select last report from db with its creation time
+
 		// TODO: use pgcln here to select last report from db
 
 		// filter CsvObjList, save only fresh objects
