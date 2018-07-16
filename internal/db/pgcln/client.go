@@ -121,6 +121,7 @@ func (c *Client) SelectAccounts() (Accounts, error) {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
 	}
+	defer rows.Close()
 
 	cols, err := rows.Columns()
 	if err != nil {
@@ -175,6 +176,7 @@ func (c *Client) SelectCsvFiles() (GcpCsvFiles, error) {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
 	}
+	defer rows.Close()
 
 	cols, err := rows.Columns()
 	if err != nil {
@@ -233,6 +235,7 @@ func (c *Client) SelectBillsByTime(start, end time.Time) (ServiceBills, error) {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
 	}
+	defer rows.Close()
 
 	cols, err := rows.Columns()
 	if err != nil {
@@ -269,6 +272,7 @@ func (c *Client) SelectBillsByService(service string) (ServiceBills, error) {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
 	}
+	defer rows.Close()
 
 	cols, err := rows.Columns()
 	if err != nil {
@@ -304,6 +308,7 @@ func (c *Client) SelectLastBill() (ServiceBill, error) {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return row, err
 	}
+	defer rows.Close()
 
 	cols, err := rows.Columns()
 	if err != nil {
