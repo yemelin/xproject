@@ -23,12 +23,13 @@ func TestInteg_NewPing(t *testing.T) {
 
 	pgcln, err := New(conf)
 	if err != nil {
-		t.Fatalf("%v: new client err, %v", pgkLogPref, err)
+		t.Fatalf("%v: new client err, %v", pgcLogPref, err)
 	}
+	defer pgcln.Close()
 
 	// ping
 	err = pgcln.Ping()
 	if err != nil {
-		t.Fatalf("%v: pg client ping err, %v", pgkLogPref, err)
+		t.Fatalf("%v: pg client ping err, %v", pgcLogPref, err)
 	}
 }
