@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 	// Don't forget add driver importing to main
 	// _ "github.com/lib/pq"
@@ -136,35 +135,11 @@ func (c *Client) SelectAccounts() (Accounts, error) {
 	var table Accounts
 	var row Account
 
-	result := make([]string, len(cols))
-	rawResult := make([][]byte, len(cols))
-	dest := make([]interface{}, len(cols))
-
-	for i := range rawResult {
-		dest[i] = &rawResult[i]
-	}
-
 	for rows.Next() {
-		if err := rows.Scan(dest...); err != nil {
+		if err := rows.Scan(&row.ID, &row.GcpAccountInfo); err != nil {
 			log.Printf("%v: db scan err, %v", pgcLogPref, err)
 			return nil, err
 		}
-
-		for i, raw := range rawResult {
-			if raw != nil {
-				result[i] = string(raw)
-			} else {
-				result[i] = "\\N"
-			}
-		}
-
-		row.ID, err = strconv.Atoi(result[0])
-		if err != nil {
-			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		row.GcpAccountInfo = result[1]
 
 		table = append(table, &row)
 	}
@@ -214,45 +189,9 @@ func (c *Client) SelectCsvFiles() (GcpCsvFiles, error) {
 	var table GcpCsvFiles
 	var row GcpCsvFile
 
-	result := make([]string, len(cols))
-	rawResult := make([][]byte, len(cols))
-	dest := make([]interface{}, len(cols))
-
-	for i := range rawResult {
-		dest[i] = &rawResult[i]
-	}
-
 	for rows.Next() {
-		if err := rows.Scan(dest...); err != nil {
+		if err := rows.Scan(&row.ID, &row.Name, &row.Bucket, &row.TimeCreated, &row.AccountID); err != nil {
 			log.Printf("%v: db scan err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		for i, raw := range rawResult {
-			if raw != nil {
-				result[i] = string(raw)
-			} else {
-				result[i] = "\\N"
-			}
-		}
-
-		row.ID, err = strconv.Atoi(result[0])
-		if err != nil {
-			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		row.Name = result[1]
-		row.Bucket = result[2]
-		row.TimeCreated, err = time.Parse(time.RFC3339, result[3])
-		if err != nil {
-			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		row.AccountID, err = strconv.Atoi(result[4])
-		if err != nil {
-			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
 			return nil, err
 		}
 
@@ -308,60 +247,9 @@ func (c *Client) SelectBillsByTime(start, end time.Time) (ServiceBills, error) {
 	var table ServiceBills
 	var row ServiceBill
 
-	result := make([]string, len(cols))
-	rawResult := make([][]byte, len(cols))
-	dest := make([]interface{}, len(cols))
-
-	for i := range rawResult {
-		dest[i] = &rawResult[i]
-	}
-
 	for rows.Next() {
-		if err := rows.Scan(dest...); err != nil {
+		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
 			log.Printf("%v: db scan err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		for i, raw := range rawResult {
-			if raw != nil {
-				result[i] = string(raw)
-			} else {
-				result[i] = "\\N"
-			}
-		}
-
-		row.ID, err = strconv.Atoi(result[0])
-		if err != nil {
-			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		row.LineItem = result[1]
-
-		row.StartTime, err = time.Parse(time.RFC3339, result[2])
-		if err != nil {
-			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		row.EndTime, err = time.Parse(time.RFC3339, result[3])
-		if err != nil {
-			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		row.Cost, err = strconv.ParseFloat(result[4], 64)
-		if err != nil {
-			log.Printf("%v: db parse float err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		row.Currency = result[5]
-		row.ProjectID = result[6]
-		row.Description = result[7]
-		row.GcpCsvFileID, err = strconv.Atoi(result[8])
-		if err != nil {
-			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
 			return nil, err
 		}
 
@@ -395,60 +283,9 @@ func (c *Client) SelectBillsByService(service string) (ServiceBills, error) {
 	var table ServiceBills
 	var row ServiceBill
 
-	result := make([]string, len(cols))
-	rawResult := make([][]byte, len(cols))
-	dest := make([]interface{}, len(cols))
-
-	for i := range rawResult {
-		dest[i] = &rawResult[i]
-	}
-
 	for rows.Next() {
-		if err := rows.Scan(dest...); err != nil {
+		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
 			log.Printf("%v: db scan err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		for i, raw := range rawResult {
-			if raw != nil {
-				result[i] = string(raw)
-			} else {
-				result[i] = "\\N"
-			}
-		}
-
-		row.ID, err = strconv.Atoi(result[0])
-		if err != nil {
-			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		row.LineItem = result[1]
-
-		row.StartTime, err = time.Parse(time.RFC3339, result[2])
-		if err != nil {
-			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		row.EndTime, err = time.Parse(time.RFC3339, result[3])
-		if err != nil {
-			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		row.Cost, err = strconv.ParseFloat(result[4], 64)
-		if err != nil {
-			log.Printf("%v: db parse float err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		row.Currency = result[5]
-		row.ProjectID = result[6]
-		row.Description = result[7]
-		row.GcpCsvFileID, err = strconv.Atoi(result[8])
-		if err != nil {
-			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
 			return nil, err
 		}
 
@@ -478,60 +315,9 @@ func (c *Client) SelectLastBill() (ServiceBill, error) {
 		return row, fmt.Errorf("%v: db format doesn't match ServiceBill struct", pgcLogPref)
 	}
 
-	result := make([]string, len(cols))
-	rawResult := make([][]byte, len(cols))
-	dest := make([]interface{}, len(cols))
-
-	for i := range rawResult {
-		dest[i] = &rawResult[i]
-	}
-
 	for rows.Next() {
-		if err := rows.Scan(dest...); err != nil {
+		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
 			log.Printf("%v: db scan err, %v", pgcLogPref, err)
-			return row, err
-		}
-
-		for i, raw := range rawResult {
-			if raw != nil {
-				result[i] = string(raw)
-			} else {
-				result[i] = "\\N"
-			}
-		}
-
-		row.ID, err = strconv.Atoi(result[0])
-		if err != nil {
-			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
-			return row, err
-		}
-
-		row.LineItem = result[1]
-
-		row.StartTime, err = time.Parse(time.RFC3339, result[2])
-		if err != nil {
-			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
-			return row, err
-		}
-
-		row.EndTime, err = time.Parse(time.RFC3339, result[3])
-		if err != nil {
-			log.Printf("%v: db time parse err, %v", pgcLogPref, err)
-			return row, err
-		}
-
-		row.Cost, err = strconv.ParseFloat(result[4], 64)
-		if err != nil {
-			log.Printf("%v: db parse float err, %v", pgcLogPref, err)
-			return row, err
-		}
-
-		row.Currency = result[5]
-		row.ProjectID = result[6]
-		row.Description = result[7]
-		row.GcpCsvFileID, err = strconv.Atoi(result[8])
-		if err != nil {
-			log.Printf("%v: db parse int err, %v", pgcLogPref, err)
 			return row, err
 		}
 	}
