@@ -284,7 +284,7 @@ func (c *Client) SelectBillsByService(service string) (ServiceBills, error) {
 func (c *Client) SelectLastBill() (ServiceBill, error) {
 	var row ServiceBill
 
-	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills ORDER BY id DESC LIMIT 1")
+	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills ORDER BY end_time DESC, start_time DESC, id DESC LIMIT 1")
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return row, err
