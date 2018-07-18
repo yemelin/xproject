@@ -201,6 +201,30 @@ func (c *Client) deleteLastCsvFile() error {
 	return nil
 }
 
+// SelectBills returns all bills from db
+func (c *Client) SelectBills() (ServiceBills, error) {
+	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills ORDER BY id ASC")
+	if err != nil {
+		log.Printf("%v: db query err, %v", pgcLogPref, err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var table ServiceBills
+	var row ServiceBill
+
+	for rows.Next() {
+		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
+			log.Printf("%v: db scan err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		table = append(table, &row)
+	}
+
+	return table, nil
+}
+
 // SelectBillsByTime returns bills from db that belong to specified time period
 func (c *Client) SelectBillsByTime(start, end time.Time) (ServiceBills, error) {
 	if start.After(end) || end.Before(start) {

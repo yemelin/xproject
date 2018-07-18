@@ -118,6 +118,37 @@ func Test_CsvFile(t *testing.T) {
 	}
 }
 
+// Test_SelectBills checks if SelectBills returns correct bills from db based on test data
+func Test_SelectBills(t *testing.T) {
+	conf := Config{
+		Host:     os.Getenv(EnvDBHost),
+		Port:     os.Getenv(EnvDBPort),
+		DB:       os.Getenv(EnvDBName),
+		User:     os.Getenv(EnvDBUser),
+		Password: os.Getenv(EnvDBPwd),
+		SSLMode:  "disable",
+	}
+
+	pgcln, err := New(conf)
+	if err != nil {
+		t.Fatalf("%v: new client err, %v", pgcLogPref, err)
+	}
+	defer pgcln.Close()
+
+	bills, err := pgcln.SelectBills()
+	if err != nil {
+		t.Fatalf("%v: select bills err: %v", pgcLogPref, err)
+	}
+
+	if len(bills) != 1 {
+		t.Fatalf("%v: expected 1 bill, not %v", pgcLogPref, len(bills))
+	}
+
+	if strings.Compare(bills[0].LineItem, "test_service") != 0 {
+		t.Fatalf("%v: selected bill's line item doesn't match 'test_service'", pgcLogPref)
+	}
+}
+
 // Test_SelectBillsByTime checks if SelectBillsByTime() returns bills from non-empty db
 func Test_SelectBillsByTime(t *testing.T) {
 	conf := Config{
