@@ -1,0 +1,21 @@
+{
+    "Exclude": [
+      "vendor",
+      "vendor.orig",
+      "tmp",
+      "src/main/vendor",
+      "build",
+      "pkg",
+      ".git",
+      ".vscode"
+    ],
+    "Enable": [
+        "errcheck",
+        "golint",
+        "varcheck",
+        "staticcheck",
+        "unparam",
+        "lll",
+        "gofmt"
+      ]
+  }
