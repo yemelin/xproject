@@ -1,4 +1,4 @@
-package gcpcln
+package gcptypes
 
 import (
 	"testing"

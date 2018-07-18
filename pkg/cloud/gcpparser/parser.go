@@ -5,10 +5,12 @@ import (
 	"reflect"
 	"strconv"
 	"time"
+
+	"github.com/pavlov-tony/xproject/pkg/cloud/gcptypes"
 )
 
 // Parse need for parse full GCP csv billing file
-func Parse(data [][]string) (res ServicesBills, err error) {
+func Parse(data [][]string) (res gcptypes.ServicesBills, err error) {
 	if data == nil {
 		return nil, fmt.Errorf("parse: data == nil")
 	}
@@ -36,7 +38,7 @@ func Parse(data [][]string) (res ServicesBills, err error) {
 }
 
 // parseLine need for parse row from GCP csv billing file
-func parseLine(line []string, tg *targCols) (*ServiceBill, error) {
+func parseLine(line []string, tg *targCols) (*gcptypes.ServiceBill, error) {
 
 	st, err := time.Parse(time.RFC3339, line[tg.ColStartTime])
 	if err != nil {
@@ -51,7 +53,7 @@ func parseLine(line []string, tg *targCols) (*ServiceBill, error) {
 		return nil, fmt.Errorf("parse line: can not parse Cost, %v", err)
 	}
 
-	sb := ServiceBill{
+	sb := gcptypes.ServiceBill{
 		LineItem:    line[tg.ColLineItem],
 		StartTime:   st,
 		EndTime:     et,

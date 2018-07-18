@@ -17,6 +17,7 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/pavlov-tony/xproject/internal/db/pgcln"
 	"github.com/pavlov-tony/xproject/pkg/cloud/gcpparser"
+	"github.com/pavlov-tony/xproject/pkg/cloud/gcptypes"
 	"google.golang.org/api/iterator"
 )
 
@@ -31,8 +32,8 @@ type Client struct {
 }
 
 type Report struct {
-	Object Object
-	Bills  gcpparser.ServicesBills
+	Object gcptypes.Object
+	Bills  gcptypes.ServicesBills
 }
 
 type Reports []*Report
@@ -83,7 +84,7 @@ func (c *Client) BucketsList(projectID string) (buckets []string, err error) {
 }
 
 // CsvObjectsList fetches csv ojects list from bucket with prefix
-func (c *Client) CsvObjsList(bktName, prefix string) (objs Objects, err error) {
+func (c *Client) CsvObjsList(bktName, prefix string) (objs gcptypes.Objects, err error) {
 
 	it := c.strgCln.Bucket(bktName).Objects(c.ctx, &storage.Query{Prefix: prefix})
 	for {
@@ -95,7 +96,7 @@ func (c *Client) CsvObjsList(bktName, prefix string) (objs Objects, err error) {
 			return nil, fmt.Errorf("fetch bucket objects: %v", err)
 		}
 		if o.ContentType == contentTypeCsv {
-			objs = append(objs, Object{Name: o.Name, Bucket: o.Bucket, Created: o.Created})
+			objs = append(objs, gcptypes.Object{Name: o.Name, Bucket: o.Bucket, Created: o.Created})
 		}
 	}
 
@@ -117,7 +118,7 @@ func (c *Client) csvObjectContent(bktName, objName string) ([][]string, error) {
 }
 
 // MakeReport creates report from gcp object in cloud for object
-func (c *Client) makeReport(obj Object) (*Report, error) {
+func (c *Client) makeReport(obj gcptypes.Object) (*Report, error) {
 	data, err := c.csvObjectContent(obj.Bucket, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("can not make report: %v", err)
@@ -136,7 +137,7 @@ func (c *Client) makeReport(obj Object) (*Report, error) {
 }
 
 // MakeReports creates reports from gcp object in cloud for objects range
-func (c *Client) MakeReports(objs Objects) (reps Reports, err error) {
+func (c *Client) MakeReports(objs gcptypes.Objects) (reps Reports, err error) {
 	for _, o := range objs {
 		r, err := c.makeReport(o)
 		if err != nil {

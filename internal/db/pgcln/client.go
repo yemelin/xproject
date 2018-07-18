@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"log"
 	"time"
+
 	// Don't forget add driver importing to main
-	// _ "github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 const (
@@ -85,9 +86,14 @@ func New(conf Config) (*Client, error) {
 	}
 
 	// get db
+	// FIXME: how to add empty password
+	// dbSourceName := fmt.Sprintf(
+	// 	"host=%v port=%v dbname=%v user=%v password=%v sslmode=%v",
+	// 	conf.Host, conf.Port, conf.DB, conf.User, conf.Password, conf.SSLMode,
+	// )
 	dbSourceName := fmt.Sprintf(
-		"host=%v port=%v dbname=%v user=%v password=%v sslmode=%v",
-		conf.Host, conf.Port, conf.DB, conf.User, conf.Password, conf.SSLMode,
+		"host=%v port=%v dbname=%v user=%v sslmode=%v",
+		conf.Host, conf.Port, conf.DB, conf.User, conf.SSLMode,
 	)
 	db, err := sql.Open("postgres", dbSourceName)
 	if err != nil {

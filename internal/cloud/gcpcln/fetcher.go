@@ -11,15 +11,20 @@ func (c *Client) Fetch(bktName, prefix string, dt time.Duration) {
 		// pull all csv objects from bucket
 		objs, err := c.CsvObjsList(bktName, prefix)
 		if err != nil {
-			log.Fatalf("in fetch CsvObjList: %v", err)
+			log.Fatalf("in fetch c.CsvObjList: %v", err)
 		}
 
 		// select last report from db with its creation time
 
-		// TODO: use pgcln here to select last report from db
+		lstObject, err := c.pgCln.SelLastGcpCsvObject()
+		if err != nil {
+			log.Printf("in fetch c.pgCln.SelLstGcpCsvObjectl: %v", err)
+		}
 
 		// filter CsvObjList, save only fresh objects
-		// TODO: objs := objs.after(lastReport.Object.Created)
+		if lstObject != nil {
+			objs = objs.After(lstObject.Created)
+		}
 
 		// make Reports from object content
 		reps, err := c.MakeReports(objs)
@@ -28,8 +33,9 @@ func (c *Client) Fetch(bktName, prefix string, dt time.Duration) {
 			log.Fatalf("in fetch MakeReports: %v", err)
 		}
 
-		// write Reports into db
-		// TODO: use pgcln here to write parsed csv into db
+		write Reports into db
+		// c.pgCln.InsReps(reps)
+		// c.pgCln.InsObjs(pgcln.Objects(make(Objects, 10)))
 
 		time.Sleep(dt * time.Hour)
 	}
