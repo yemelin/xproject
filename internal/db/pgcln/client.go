@@ -126,7 +126,7 @@ func (c *Client) AddAccount(account GcpAccount) error {
 	return nil
 }
 
-// removeLastAccount deletes the latest added account from db
+// removeLastAccount removes the latest added account from db
 func (c *Client) removeLastAccount() error {
 	if _, err := c.idb.Query("DELETE FROM xproject.accounts WHERE id = (SELECT MAX(id) FROM xproject.accounts)"); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
