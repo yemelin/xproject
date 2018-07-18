@@ -45,6 +45,54 @@ func New(conf Config) (*Client, error) {
 	return c, nil
 }
 
+func combineAccounts(rows *sql.Rows) (GcpAccounts, error) {
+	var table GcpAccounts
+	var row GcpAccount
+
+	for rows.Next() {
+		if err := rows.Scan(&row.ID, &row.GcpAccountInfo); err != nil {
+			log.Printf("%v: db scan err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		table = append(table, &row)
+	}
+
+	return table, nil
+}
+
+func combineCsvFiles(rows *sql.Rows) (GcpCsvFiles, error) {
+	var table GcpCsvFiles
+	var row GcpCsvFile
+
+	for rows.Next() {
+		if err := rows.Scan(&row.ID, &row.Name, &row.Bucket, &row.TimeCreated, &row.AccountID); err != nil {
+			log.Printf("%v: db scan err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		table = append(table, &row)
+	}
+
+	return table, nil
+}
+
+func combineBills(rows *sql.Rows) (ServiceBills, error) {
+	var table ServiceBills
+	var row ServiceBill
+
+	for rows.Next() {
+		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
+			log.Printf("%v: db scan err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		table = append(table, &row)
+	}
+
+	return table, nil
+}
+
 // Close releases db resources
 func (c *Client) Close() error {
 	return c.idb.Close()
@@ -64,19 +112,7 @@ func (c *Client) ListAccounts() (GcpAccounts, error) {
 	}
 	defer rows.Close()
 
-	var table GcpAccounts
-	var row GcpAccount
-
-	for rows.Next() {
-		if err := rows.Scan(&row.ID, &row.GcpAccountInfo); err != nil {
-			log.Printf("%v: db scan err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		table = append(table, &row)
-	}
-
-	return table, nil
+	return combineAccounts(rows)
 }
 
 // AddAccount adds account into db
@@ -109,19 +145,7 @@ func (c *Client) ListCsvFiles() (GcpCsvFiles, error) {
 	}
 	defer rows.Close()
 
-	var table GcpCsvFiles
-	var row GcpCsvFile
-
-	for rows.Next() {
-		if err := rows.Scan(&row.ID, &row.Name, &row.Bucket, &row.TimeCreated, &row.AccountID); err != nil {
-			log.Printf("%v: db scan err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		table = append(table, &row)
-	}
-
-	return table, nil
+	return combineCsvFiles(rows)
 }
 
 // AddCsvFile adds CSV file into db
@@ -154,19 +178,7 @@ func (c *Client) ListAllBills() (ServiceBills, error) {
 	}
 	defer rows.Close()
 
-	var table ServiceBills
-	var row ServiceBill
-
-	for rows.Next() {
-		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
-			log.Printf("%v: db scan err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		table = append(table, &row)
-	}
-
-	return table, nil
+	return combineBills(rows)
 }
 
 // ListBillsByTime returns bills from db that belong to specified time period
@@ -182,19 +194,7 @@ func (c *Client) ListBillsByTime(start, end time.Time) (ServiceBills, error) {
 	}
 	defer rows.Close()
 
-	var table ServiceBills
-	var row ServiceBill
-
-	for rows.Next() {
-		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
-			log.Printf("%v: db scan err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		table = append(table, &row)
-	}
-
-	return table, nil
+	return combineBills(rows)
 }
 
 // ListBillsByService returns bills from db that are related to specified GCP service
@@ -209,19 +209,7 @@ func (c *Client) ListBillsByService(service string) (ServiceBills, error) {
 	}
 	defer rows.Close()
 
-	var table ServiceBills
-	var row ServiceBill
-
-	for rows.Next() {
-		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
-			log.Printf("%v: db scan err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		table = append(table, &row)
-	}
-
-	return table, nil
+	return combineBills(rows)
 }
 
 // ListBillsByProject returns bills from db that are related to specified GCP project
@@ -236,19 +224,7 @@ func (c *Client) ListBillsByProject(project string) (ServiceBills, error) {
 	}
 	defer rows.Close()
 
-	var table ServiceBills
-	var row ServiceBill
-
-	for rows.Next() {
-		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
-			log.Printf("%v: db scan err, %v", pgcLogPref, err)
-			return nil, err
-		}
-
-		table = append(table, &row)
-	}
-
-	return table, nil
+	return combineBills(rows)
 }
 
 // GetLastBill returns the latest added bill from db by time
