@@ -247,6 +247,33 @@ func Test_AddBill_removeLastBill(t *testing.T) {
 	}
 }
 
+// Test_ListBillsByProject checks if ListBillsByProject() returns correct bill from db by project
+func Test_ListBillsByProject(t *testing.T) {
+	conf := Config{
+		Host:     os.Getenv(EnvDBHost),
+		Port:     os.Getenv(EnvDBPort),
+		DB:       os.Getenv(EnvDBName),
+		User:     os.Getenv(EnvDBUser),
+		Password: os.Getenv(EnvDBPwd),
+		SSLMode:  "disable",
+	}
+
+	pgcln, err := New(conf)
+	if err != nil {
+		t.Fatalf("%v: new client err, %v", pgcLogPref, err)
+	}
+	defer pgcln.Close()
+
+	bill, err := pgcln.ListBillsByProject("test_project")
+	if err != nil {
+		t.Fatalf("%v: list bills err: %v", pgcLogPref, err)
+	}
+
+	if strings.Compare(bill[0].LineItem, "test_project") != 0 {
+		t.Fatalf("%v: bill's line item doesn't match 'test_service'", pgcLogPref)
+	}
+}
+
 // Test_GetLastBill checks if GetLastBill() returns the last bill based on test data from db
 func Test_GetLastBill(t *testing.T) {
 	conf := Config{

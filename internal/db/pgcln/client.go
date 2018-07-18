@@ -280,6 +280,33 @@ func (c *Client) ListBillsByService(service string) (ServiceBills, error) {
 	return table, nil
 }
 
+// ListBillsByProject returns bills from db that are related to specified GCP project
+// If project is an empty string then all bills will be returned
+func (c *Client) ListBillsByProject(project string) (ServiceBills, error) {
+	project = "%" + project + "%"
+
+	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills WHERE project_id LIKE $1 ORDER BY id ASC", project)
+	if err != nil {
+		log.Printf("%v: db query err, %v", pgcLogPref, err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var table ServiceBills
+	var row ServiceBill
+
+	for rows.Next() {
+		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
+			log.Printf("%v: db scan err, %v", pgcLogPref, err)
+			return nil, err
+		}
+
+		table = append(table, &row)
+	}
+
+	return table, nil
+}
+
 // GetLastBill returns the latest added bill from db
 func (c *Client) GetLastBill() (ServiceBill, error) {
 	var row ServiceBill
