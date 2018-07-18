@@ -41,8 +41,8 @@ type Client struct {
 	idb IDB
 }
 
-// Account contains information about GCP user account
-type Account struct {
+// GcpAccount contains information about GCP user account
+type GcpAccount struct {
 	ID             int
 	GcpAccountInfo string
 }
@@ -69,8 +69,8 @@ type ServiceBill struct {
 	GcpCsvFileID int
 }
 
-// Accounts is a set of Account
-type Accounts []*Account
+// GcpAccounts is a set of GcpAccount
+type GcpAccounts []*GcpAccount
 
 // GcpCsvFiles is a set of GcpCsvFile
 type GcpCsvFiles []*GcpCsvFile
@@ -112,7 +112,7 @@ func (c *Client) Ping() error {
 }
 
 // ListAccounts returns all accounts from db
-func (c *Client) ListAccounts() (Accounts, error) {
+func (c *Client) ListAccounts() (GcpAccounts, error) {
 	rows, err := c.idb.Query("SELECT * FROM xproject.accounts ORDER BY id ASC")
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
@@ -120,8 +120,8 @@ func (c *Client) ListAccounts() (Accounts, error) {
 	}
 	defer rows.Close()
 
-	var table Accounts
-	var row Account
+	var table GcpAccounts
+	var row GcpAccount
 
 	for rows.Next() {
 		if err := rows.Scan(&row.ID, &row.GcpAccountInfo); err != nil {
@@ -136,7 +136,7 @@ func (c *Client) ListAccounts() (Accounts, error) {
 }
 
 // AddAccount adds account into db
-func (c *Client) AddAccount(account Account) error {
+func (c *Client) AddAccount(account GcpAccount) error {
 	if _, err := c.idb.Query("INSERT INTO xproject.accounts VALUES(DEFAULT, $1)",
 		account.GcpAccountInfo); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)

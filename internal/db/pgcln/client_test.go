@@ -26,7 +26,7 @@ func Test_Account(t *testing.T) {
 	}
 	defer pgcln.Close()
 
-	testAccount := Account{
+	testAccount := GcpAccount{
 		ID:             1,
 		GcpAccountInfo: "testInfo",
 	}
