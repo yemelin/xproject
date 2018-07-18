@@ -22,62 +22,6 @@ const (
 	EnvDBPwd  = "APP_DB_PG_PWD"
 )
 
-// Config sets database configs
-type Config struct {
-	Host     string
-	Port     string
-	DB       string
-	User     string
-	Password string
-	SSLMode  string
-}
-
-// Client implements postgres db client
-type Client struct {
-	// config
-	conf Config
-
-	// db
-	idb IDB
-}
-
-// GcpAccount contains information about GCP user account
-type GcpAccount struct {
-	ID             int
-	GcpAccountInfo string
-}
-
-// GcpCsvFile contains information about CSV files with billing reports
-type GcpCsvFile struct {
-	ID          int
-	Name        string
-	Bucket      string
-	TimeCreated time.Time
-	AccountID   int
-}
-
-// ServiceBill contains relevant information from billing report
-type ServiceBill struct {
-	ID           int
-	LineItem     string
-	StartTime    time.Time
-	EndTime      time.Time
-	Cost         float64
-	Currency     string
-	ProjectID    string
-	Description  string
-	GcpCsvFileID int
-}
-
-// GcpAccounts is a set of GcpAccount
-type GcpAccounts []*GcpAccount
-
-// GcpCsvFiles is a set of GcpCsvFile
-type GcpCsvFiles []*GcpCsvFile
-
-// ServiceBills is a set of ServiceBill
-type ServiceBills []*ServiceBill
-
 // New inits client
 func New(conf Config) (*Client, error) {
 	c := &Client{
@@ -307,7 +251,7 @@ func (c *Client) ListBillsByProject(project string) (ServiceBills, error) {
 	return table, nil
 }
 
-// GetLastBill returns the latest added bill from db
+// GetLastBill returns the latest added bill from db by time
 func (c *Client) GetLastBill() (ServiceBill, error) {
 	var row ServiceBill
 
