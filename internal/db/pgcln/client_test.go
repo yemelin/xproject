@@ -269,7 +269,7 @@ func Test_ListBillsByProject(t *testing.T) {
 		t.Fatalf("%v: list bills err: %v", pgcLogPref, err)
 	}
 
-	if strings.Compare(bill[0].LineItem, "test_project") != 0 {
+	if strings.Compare(bill[0].LineItem, "test_service") != 0 {
 		t.Fatalf("%v: bill's line item doesn't match 'test_service'", pgcLogPref)
 	}
 }
