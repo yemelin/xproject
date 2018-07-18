@@ -1,0 +1,39 @@
+version: '3'
+services:
+    api:
+        build:
+            dockerfile: Base.Dockerfile
+            context: ../build/package/
+        image: ${APP_NAME:-xproject}:base
+        command: sh -c "go test -v ./... -tags integration"
+        volumes:
+            - ../:/go/src/github.com/pavlov-tony/xproject
+        env_file:
+            - ../build/package/dev_config.env
+        environment:
+            - PROFILE=TEST
+        ports:
+            - "8080:8080"
+        working_dir: /go/src/github.com/pavlov-tony/xproject
+        container_name: ${APP_NAME:-xproject}-api-test
+        networks: 
+            - default-network
+        depends_on: 
+            - postgres
+    postgres:
+        build:
+            dockerfile: PG.Dockerfile
+            context: ../build/package/
+        volumes:
+            - ../scripts/initdb/init_test_db.sh:/docker-entrypoint-initdb.d/init_test_db.sh
+        environment:
+            - POSTGRES_USER=xproject-test
+            - POSTGRES_PASSWORD=xproject-test
+        ports:
+            - '5432:5432'
+        container_name: ${APP_NAME:-xproject}-postgres-test
+        networks: 
+            - default-network
+
+networks:
+  default-network:
