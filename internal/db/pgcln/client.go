@@ -45,6 +45,7 @@ func New(conf Config) (*Client, error) {
 	return c, nil
 }
 
+// combineAccounts combines rows of query result into GcpAccounts
 func combineAccounts(rows *sql.Rows) (GcpAccounts, error) {
 	var table GcpAccounts
 	var row GcpAccount
@@ -61,6 +62,7 @@ func combineAccounts(rows *sql.Rows) (GcpAccounts, error) {
 	return table, nil
 }
 
+// combineCsvFiles combines rows of query result into GcpCsvFiles
 func combineCsvFiles(rows *sql.Rows) (GcpCsvFiles, error) {
 	var table GcpCsvFiles
 	var row GcpCsvFile
@@ -77,6 +79,7 @@ func combineCsvFiles(rows *sql.Rows) (GcpCsvFiles, error) {
 	return table, nil
 }
 
+// combineBills combines rows of query result into ServiceBills
 func combineBills(rows *sql.Rows) (ServiceBills, error) {
 	var table ServiceBills
 	var row ServiceBill
@@ -105,7 +108,7 @@ func (c *Client) Ping() error {
 
 // ListAccounts returns all accounts from db
 func (c *Client) ListAccounts() (GcpAccounts, error) {
-	rows, err := c.idb.Query("SELECT * FROM xproject.accounts ORDER BY id ASC")
+	rows, err := c.idb.Query(selectFrom("xproject.accounts"))
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -117,8 +120,7 @@ func (c *Client) ListAccounts() (GcpAccounts, error) {
 
 // AddAccount adds account into db
 func (c *Client) AddAccount(account GcpAccount) error {
-	if _, err := c.idb.Query("INSERT INTO xproject.accounts VALUES(DEFAULT, $1)",
-		account.GcpAccountInfo); err != nil {
+	if _, err := c.idb.Query(insertInto("xproject.accounts", 1), account.GcpAccountInfo); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -128,7 +130,7 @@ func (c *Client) AddAccount(account GcpAccount) error {
 
 // removeLastAccount removes the latest added account from db
 func (c *Client) removeLastAccount() error {
-	if _, err := c.idb.Query("DELETE FROM xproject.accounts WHERE id = (SELECT MAX(id) FROM xproject.accounts)"); err != nil {
+	if _, err := c.idb.Query(deleteFrom("xproject.accounts")); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -138,7 +140,7 @@ func (c *Client) removeLastAccount() error {
 
 // ListCsvFiles returns all CSV files from db
 func (c *Client) ListCsvFiles() (GcpCsvFiles, error) {
-	rows, err := c.idb.Query("SELECT * FROM xproject.gcp_csv_files ORDER BY id ASC")
+	rows, err := c.idb.Query(selectFrom("xproject.gcp_csv_files"))
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -150,8 +152,7 @@ func (c *Client) ListCsvFiles() (GcpCsvFiles, error) {
 
 // AddCsvFile adds CSV file into db
 func (c *Client) AddCsvFile(file GcpCsvFile) error {
-	if _, err := c.idb.Query("INSERT INTO xproject.gcp_csv_files VALUES(DEFAULT, $1, $2, $3, $4)",
-		file.Name, file.Bucket, file.TimeCreated, file.AccountID); err != nil {
+	if _, err := c.idb.Query(insertInto("xproject.gcp_csv_files", 4), file.Name, file.Bucket, file.TimeCreated, file.AccountID); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -161,7 +162,7 @@ func (c *Client) AddCsvFile(file GcpCsvFile) error {
 
 // removeLastCsvFile removes the latest added CSV file from db
 func (c *Client) removeLastCsvFile() error {
-	if _, err := c.idb.Query("DELETE FROM xproject.gcp_csv_files WHERE id = (SELECT MAX(id) FROM xproject.gcp_csv_files)"); err != nil {
+	if _, err := c.idb.Query(deleteFrom("xproject.gcp_csv_files")); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -171,7 +172,7 @@ func (c *Client) removeLastCsvFile() error {
 
 // ListAllBills returns all bills from db
 func (c *Client) ListAllBills() (ServiceBills, error) {
-	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills ORDER BY id ASC")
+	rows, err := c.idb.Query(selectFrom("xproject.service_bills"))
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -181,13 +182,13 @@ func (c *Client) ListAllBills() (ServiceBills, error) {
 	return combineBills(rows)
 }
 
-// ListBillsByTime returns bills from db that belong to specified time period
+// ListBillsByTime returns bills from db that are within the specified time period
 func (c *Client) ListBillsByTime(start, end time.Time) (ServiceBills, error) {
 	if start.After(end) || end.Before(start) {
 		return nil, fmt.Errorf("%v: invalid arguments err", pgcLogPref)
 	}
 
-	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills WHERE start_time >= $1 AND end_time <= $2 ORDER BY id ASC", start, end)
+	rows, err := c.idb.Query(selectByRange("xproject.service_bills", "start_time", "end_time"), start, end)
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -202,7 +203,7 @@ func (c *Client) ListBillsByTime(start, end time.Time) (ServiceBills, error) {
 func (c *Client) ListBillsByService(service string) (ServiceBills, error) {
 	service = "%" + service + "%"
 
-	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills WHERE line_item LIKE $1 ORDER BY id ASC", service)
+	rows, err := c.idb.Query(selectByMatch("xproject.service_bills", "line_item"), service)
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -217,7 +218,7 @@ func (c *Client) ListBillsByService(service string) (ServiceBills, error) {
 func (c *Client) ListBillsByProject(project string) (ServiceBills, error) {
 	project = "%" + project + "%"
 
-	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills WHERE project_id LIKE $1 ORDER BY id ASC", project)
+	rows, err := c.idb.Query(selectByMatch("xproject.service_bills", "project_id"), project)
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -231,7 +232,7 @@ func (c *Client) ListBillsByProject(project string) (ServiceBills, error) {
 func (c *Client) GetLastBill() (ServiceBill, error) {
 	var row ServiceBill
 
-	rows, err := c.idb.Query("SELECT * FROM xproject.service_bills ORDER BY end_time DESC, start_time DESC, id DESC LIMIT 1")
+	rows, err := c.idb.Query(selectLast("xproject.service_bills", "end_time", "start_time", "id"))
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return row, err
@@ -250,8 +251,7 @@ func (c *Client) GetLastBill() (ServiceBill, error) {
 
 // AddBill adds bill into db
 func (c *Client) AddBill(bill ServiceBill) error {
-	if _, err := c.idb.Query("INSERT INTO xproject.service_bills VALUES(DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8)",
-		bill.LineItem, bill.StartTime, bill.EndTime, bill.Cost, bill.Currency, bill.ProjectID, bill.Description, bill.GcpCsvFileID); err != nil {
+	if _, err := c.idb.Query(insertInto("xproject.service_bills", 8), bill.LineItem, bill.StartTime, bill.EndTime, bill.Cost, bill.Currency, bill.ProjectID, bill.Description, bill.GcpCsvFileID); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -261,7 +261,7 @@ func (c *Client) AddBill(bill ServiceBill) error {
 
 // removeLastBill removes the latest added bill from db
 func (c *Client) removeLastBill() error {
-	if _, err := c.idb.Query("DELETE FROM xproject.service_bills WHERE id = (SELECT MAX(id) FROM xproject.service_bills)"); err != nil {
+	if _, err := c.idb.Query(deleteFrom("xproject.service_bills")); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
