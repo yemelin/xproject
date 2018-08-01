@@ -22,6 +22,25 @@ const (
 	EnvDBPwd  = "APP_DB_PG_PWD"
 )
 
+// Config sets database configs
+type Config struct {
+	Host     string
+	Port     string
+	DB       string
+	User     string
+	Password string
+	SSLMode  string
+}
+
+// Client implements postgres db client
+type Client struct {
+	// config
+	conf Config
+
+	// db
+	idb IDB
+}
+
 // New inits client
 func New(conf Config) (*Client, error) {
 	c := &Client{

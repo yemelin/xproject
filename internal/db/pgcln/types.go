@@ -50,25 +50,6 @@ type IClient interface {
 	AddBill(ServiceBill) error
 }
 
-// Config sets database configs
-type Config struct {
-	Host     string
-	Port     string
-	DB       string
-	User     string
-	Password string
-	SSLMode  string
-}
-
-// Client implements postgres db client
-type Client struct {
-	// config
-	conf Config
-
-	// db
-	idb IDB
-}
-
 // GcpAccount contains information about GCP user account
 type GcpAccount struct {
 	ID             int
