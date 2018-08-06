@@ -1,6 +1,7 @@
 package pgcln
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -39,6 +40,9 @@ type Client struct {
 
 	// db
 	idb IDB
+
+	// prepared statements
+	queries map[string]*sql.Stmt
 }
 
 // New inits client
@@ -60,6 +64,13 @@ func New(conf Config) (*Client, error) {
 
 	// set db interface
 	c.idb = db
+
+	// prepare queries
+	err = c.prepareQueries()
+	if err != nil {
+		log.Printf("%v: prepare queries err, %v", pgcLogPref, err)
+		return nil, err
+	}
 
 	return c, nil
 }
@@ -117,6 +128,10 @@ func combineBills(rows *sql.Rows) (ServiceBills, error) {
 
 // Close releases db resources
 func (c *Client) Close() error {
+	for _, stmt := range c.queries {
+		stmt.Close()
+	}
+
 	return c.idb.Close()
 }
 
@@ -127,7 +142,7 @@ func (c *Client) Ping() error {
 
 // ListAccounts returns all accounts from db
 func (c *Client) ListAccounts() (GcpAccounts, error) {
-	rows, err := c.selectFromAccounts()
+	rows, err := c.queries["selectFromAccounts"].QueryContext(context.Background())
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -139,7 +154,7 @@ func (c *Client) ListAccounts() (GcpAccounts, error) {
 
 // AddAccount adds account into db
 func (c *Client) AddAccount(account GcpAccount) error {
-	if err := c.insertIntoAccounts(account); err != nil {
+	if _, err := c.queries["insertIntoAccounts"].ExecContext(context.Background(), account.GcpAccountInfo); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -149,7 +164,7 @@ func (c *Client) AddAccount(account GcpAccount) error {
 
 // removeLastAccount removes the latest added account from db
 func (c *Client) removeLastAccount() error {
-	if err := c.deleteFromAccounts(); err != nil {
+	if _, err := c.queries["deleteFromAccounts"].ExecContext(context.Background()); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -159,7 +174,7 @@ func (c *Client) removeLastAccount() error {
 
 // ListCsvFiles returns all CSV files from db
 func (c *Client) ListCsvFiles() (GcpCsvFiles, error) {
-	rows, err := c.selectFromCsvFiles()
+	rows, err := c.queries["selectFromCsvFiles"].QueryContext(context.Background())
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -171,7 +186,7 @@ func (c *Client) ListCsvFiles() (GcpCsvFiles, error) {
 
 // AddCsvFile adds CSV file into db
 func (c *Client) AddCsvFile(file GcpCsvFile) error {
-	if err := c.insertIntoCsvFiles(file); err != nil {
+	if _, err := c.queries["insertIntoCsvFiles"].ExecContext(context.Background(), file.Name, file.Bucket, file.TimeCreated, file.AccountID); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -181,7 +196,7 @@ func (c *Client) AddCsvFile(file GcpCsvFile) error {
 
 // removeLastCsvFile removes the latest added CSV file from db
 func (c *Client) removeLastCsvFile() error {
-	if err := c.deleteFromCsvFiles(); err != nil {
+	if _, err := c.queries["deleteFromCsvFiles"].ExecContext(context.Background()); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -191,7 +206,7 @@ func (c *Client) removeLastCsvFile() error {
 
 // ListAllBills returns all bills from db
 func (c *Client) ListAllBills() (ServiceBills, error) {
-	rows, err := c.selectFromBills()
+	rows, err := c.queries["selectFromBills"].QueryContext(context.Background())
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -207,7 +222,7 @@ func (c *Client) ListBillsByTime(start, end time.Time) (ServiceBills, error) {
 		return nil, fmt.Errorf("%v: invalid arguments err", pgcLogPref)
 	}
 
-	rows, err := c.selectBillsByTime(start, end)
+	rows, err := c.queries["selectBillsByTime"].QueryContext(context.Background(), start, end)
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -220,7 +235,9 @@ func (c *Client) ListBillsByTime(start, end time.Time) (ServiceBills, error) {
 // ListBillsByService returns bills from db that are related to specified GCP service
 // If service is an empty string then all bills will be returned
 func (c *Client) ListBillsByService(service string) (ServiceBills, error) {
-	rows, err := c.selectBillsByService(service)
+	service = fmt.Sprintf("%%%v%%", service)
+
+	rows, err := c.queries["selectBillsByService"].QueryContext(context.Background(), service)
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -233,7 +250,9 @@ func (c *Client) ListBillsByService(service string) (ServiceBills, error) {
 // ListBillsByProject returns bills from db that are related to specified GCP project
 // If project is an empty string then all bills will be returned
 func (c *Client) ListBillsByProject(project string) (ServiceBills, error) {
-	rows, err := c.selectBillsByProject(project)
+	project = fmt.Sprintf("%%%v%%", project)
+
+	rows, err := c.queries["selectBillsByProject"].QueryContext(context.Background(), project)
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
@@ -247,7 +266,7 @@ func (c *Client) ListBillsByProject(project string) (ServiceBills, error) {
 func (c *Client) GetLastBill() (ServiceBill, error) {
 	var row ServiceBill
 
-	rows, err := c.selectLastBill()
+	rows, err := c.queries["selectLastBill"].QueryContext(context.Background())
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return row, err
@@ -266,7 +285,7 @@ func (c *Client) GetLastBill() (ServiceBill, error) {
 
 // AddBill adds bill into db
 func (c *Client) AddBill(bill ServiceBill) error {
-	if err := c.insertIntoBills(bill); err != nil {
+	if _, err := c.queries["insertIntoBills"].ExecContext(context.Background(), bill.LineItem, bill.StartTime, bill.EndTime, bill.Cost, bill.Currency, bill.ProjectID, bill.Description, bill.GcpCsvFileID); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -276,7 +295,7 @@ func (c *Client) AddBill(bill ServiceBill) error {
 
 // removeLastBill removes the latest added bill from db
 func (c *Client) removeLastBill() error {
-	if err := c.deleteFromBills(); err != nil {
+	if _, err := c.queries["deleteFromBills"].ExecContext(context.Background()); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
