@@ -12,7 +12,7 @@ import (
 func (c *Client) selectFromAccounts() (*sql.Rows, error) {
 	stmt, err := c.idb.PrepareContext(context.Background(), "SELECT * FROM xproject.accounts ORDER BY id ASC")
 	if err != nil {
-		log.Printf("%v: select from accounts err, %v", pgcLogPref, err)
+		log.Printf("%v: prepare err, %v", pgcLogPref, err)
 		return nil, err
 	}
 	defer stmt.Close()
@@ -22,7 +22,14 @@ func (c *Client) selectFromAccounts() (*sql.Rows, error) {
 
 // insertIntoAccounts inserts an account into table
 func (c *Client) insertIntoAccounts(account GcpAccount) error {
-	_, err := c.idb.ExecContext(context.Background(), "INSERT INTO xproject.accounts VALUES(DEFAULT, $1)", account.GcpAccountInfo)
+	stmt, err := c.idb.PrepareContext(context.Background(), "INSERT INTO xproject.accounts VALUES(DEFAULT, $1)")
+	if err != nil {
+		log.Printf("%v: prepare err, %v", pgcLogPref, err)
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(context.Background(), account.GcpAccountInfo)
 
 	return err
 }
@@ -45,7 +52,7 @@ func (c *Client) deleteFromAccounts() error {
 func (c *Client) selectFromCsvFiles() (*sql.Rows, error) {
 	stmt, err := c.idb.PrepareContext(context.Background(), "SELECT * FROM xproject.gcp_csv_files ORDER BY id ASC")
 	if err != nil {
-		log.Printf("%v: select from csv files err, %v", pgcLogPref, err)
+		log.Printf("%v: prepare err, %v", pgcLogPref, err)
 		return nil, err
 	}
 	defer stmt.Close()
@@ -55,7 +62,14 @@ func (c *Client) selectFromCsvFiles() (*sql.Rows, error) {
 
 // insertIntoCsvFiles inserts a CSV file into table
 func (c *Client) insertIntoCsvFiles(file GcpCsvFile) error {
-	_, err := c.idb.ExecContext(context.Background(), "INSERT INTO xproject.gcp_csv_files VALUES(DEFAULT, $1, $2, $3, $4)", file.Name, file.Bucket, file.TimeCreated, file.AccountID)
+	stmt, err := c.idb.PrepareContext(context.Background(), "INSERT INTO xproject.gcp_csv_files VALUES(DEFAULT, $1, $2, $3, $4)")
+	if err != nil {
+		log.Printf("%v: prepare err, %v", pgcLogPref, err)
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(context.Background(), file.Name, file.Bucket, file.TimeCreated, file.AccountID)
 
 	return err
 }
@@ -88,21 +102,42 @@ func (c *Client) selectFromBills() (*sql.Rows, error) {
 
 // selectBillsByTime selects bills that are within the specified time period
 func (c *Client) selectBillsByTime(start, end time.Time) (*sql.Rows, error) {
-	return c.idb.QueryContext(context.Background(), "SELECT * FROM xproject.service_bills WHERE start_time >= $1 AND end_time <= $2 ORDER BY id ASC", start, end)
+	stmt, err := c.idb.PrepareContext(context.Background(), "SELECT * FROM xproject.service_bills WHERE start_time >= $1 AND end_time <= $2 ORDER BY id ASC")
+	if err != nil {
+		log.Printf("%v: prepare err, %v", pgcLogPref, err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	return stmt.QueryContext(context.Background(), start, end)
 }
 
 // selectBillsByService selects bills that match the specified service
 func (c *Client) selectBillsByService(service string) (*sql.Rows, error) {
 	service = fmt.Sprintf("%%%v%%", service)
 
-	return c.idb.QueryContext(context.Background(), "SELECT * FROM xproject.service_bills WHERE line_item LIKE $1 ORDER BY id ASC", service)
+	stmt, err := c.idb.PrepareContext(context.Background(), "SELECT * FROM xproject.service_bills WHERE line_item LIKE $1 ORDER BY id ASC")
+	if err != nil {
+		log.Printf("%v: prepare err, %v", pgcLogPref, err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	return stmt.QueryContext(context.Background(), service)
 }
 
 // selectBillsByProject selects bills that match the specified project
 func (c *Client) selectBillsByProject(project string) (*sql.Rows, error) {
 	project = fmt.Sprintf("%%%v%%", project)
 
-	return c.idb.QueryContext(context.Background(), "SELECT * FROM xproject.service_bills WHERE project_id LIKE $1 ORDER BY id ASC", project)
+	stmt, err := c.idb.PrepareContext(context.Background(), "SELECT * FROM xproject.service_bills WHERE project_id LIKE $1 ORDER BY id ASC")
+	if err != nil {
+		log.Printf("%v: prepare err, %v", pgcLogPref, err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	return stmt.QueryContext(context.Background(), project)
 }
 
 // selectLastBill selects bill by largest value in end_time, start_time and then id
@@ -119,7 +154,14 @@ func (c *Client) selectLastBill() (*sql.Rows, error) {
 
 // insertIntoBills inserts a bill into table
 func (c *Client) insertIntoBills(bill ServiceBill) error {
-	_, err := c.idb.ExecContext(context.Background(), "INSERT INTO xproject.service_bills VALUES(DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8)", bill.LineItem, bill.StartTime, bill.EndTime, bill.Cost, bill.Currency, bill.ProjectID, bill.Description, bill.GcpCsvFileID)
+	stmt, err := c.idb.PrepareContext(context.Background(), "INSERT INTO xproject.service_bills VALUES(DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8)")
+	if err != nil {
+		log.Printf("%v: prepare err, %v", pgcLogPref, err)
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(context.Background(), bill.LineItem, bill.StartTime, bill.EndTime, bill.Cost, bill.Currency, bill.ProjectID, bill.Description, bill.GcpCsvFileID)
 
 	return err
 }
