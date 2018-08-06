@@ -3,6 +3,7 @@ package pgcln
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 )
@@ -92,14 +93,14 @@ func (c *Client) selectBillsByTime(start, end time.Time) (*sql.Rows, error) {
 
 // selectBillsByService selects bills that match the specified service
 func (c *Client) selectBillsByService(service string) (*sql.Rows, error) {
-	service = "%" + service + "%"
+	service = fmt.Sprintf("%%%v%%", service)
 
 	return c.idb.QueryContext(context.Background(), "SELECT * FROM xproject.service_bills WHERE line_item LIKE $1 ORDER BY id ASC", service)
 }
 
 // selectBillsByProject selects bills that match the specified project
 func (c *Client) selectBillsByProject(project string) (*sql.Rows, error) {
-	project = "%" + project + "%"
+	project = fmt.Sprintf("%%%v%%", project)
 
 	return c.idb.QueryContext(context.Background(), "SELECT * FROM xproject.service_bills WHERE project_id LIKE $1 ORDER BY id ASC", project)
 }
