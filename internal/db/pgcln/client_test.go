@@ -26,6 +26,13 @@ func Test_Account(t *testing.T) {
 	}
 	defer pgcln.Close()
 
+	accounts, err := pgcln.ListAccounts()
+	if err != nil {
+		t.Fatalf("%v: list accounts err: %v", pgcLogPref, err)
+	}
+
+	prevLen := len(accounts)
+
 	testAccount := GcpAccount{
 		ID:             1,
 		GcpAccountInfo: "testInfo",
@@ -35,16 +42,16 @@ func Test_Account(t *testing.T) {
 		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
 
-	accounts, err := pgcln.ListAccounts()
+	accounts, err = pgcln.ListAccounts()
 	if err != nil {
 		t.Fatalf("%v: list accounts err: %v", pgcLogPref, err)
 	}
 
-	if len(accounts) != 2 {
-		t.Fatalf("%v: expected 2 accounts, not %v", pgcLogPref, len(accounts))
+	if len(accounts)-prevLen != 1 {
+		t.Fatalf("%v: expected 1 new account, not %v", pgcLogPref, len(accounts)-prevLen)
 	}
 
-	if strings.Compare(accounts[0].GcpAccountInfo, "testInfo") != 0 {
+	if strings.Compare(accounts[len(accounts)-1].GcpAccountInfo, "testInfo") != 0 {
 		t.Fatalf("%v: account's info doesn't match the test account", pgcLogPref)
 	}
 
@@ -57,8 +64,12 @@ func Test_Account(t *testing.T) {
 		t.Fatalf("%v: list accounts err: %v", pgcLogPref, err)
 	}
 
-	if len(accounts) != 1 {
-		t.Fatalf("%v: expected 1 account, not %v", pgcLogPref, len(accounts))
+	if len(accounts) != prevLen {
+		if prevLen != 1 {
+			t.Fatalf("%v: expected %v accounts, not %v", pgcLogPref, prevLen, len(accounts))
+		} else {
+			t.Fatalf("%v: expected %v account, not %v", pgcLogPref, prevLen, len(accounts))
+		}
 	}
 }
 
@@ -79,28 +90,49 @@ func Test_CsvFile(t *testing.T) {
 	}
 	defer pgcln.Close()
 
+	csvFiles, err := pgcln.ListCsvFiles()
+	if err != nil {
+		t.Fatalf("%v: list csv file err: %v", pgcLogPref, err)
+	}
+
+	prevLen := len(csvFiles)
+
+	testAccount := GcpAccount{
+		ID:             1,
+		GcpAccountInfo: "testInfo",
+	}
+
+	if err := pgcln.AddAccount(testAccount); err != nil {
+		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
+	}
+
+	accounts, err := pgcln.ListAccounts()
+	if err != nil {
+		t.Fatalf("%v: list accounts err: %v", pgcLogPref, err)
+	}
+
 	testCsvFile := GcpCsvFile{
 		ID:          1,
 		Name:        "testName",
 		Bucket:      "testBucket",
-		TimeCreated: time.Now(),
-		AccountID:   1,
+		TimeCreated: time.Date(2018, 1, 1, 0, 0, 0, 0, time.Local),
+		AccountID:   accounts[len(accounts)-1].ID,
 	}
 
 	if err := pgcln.AddCsvFile(testCsvFile); err != nil {
 		t.Fatalf("%v: add csv file err: %v", pgcLogPref, err)
 	}
 
-	csvFiles, err := pgcln.ListCsvFiles()
+	csvFiles, err = pgcln.ListCsvFiles()
 	if err != nil {
 		t.Fatalf("%v: list csv file err: %v", pgcLogPref, err)
 	}
 
-	if len(csvFiles) != 2 {
-		t.Fatalf("%v: expected 2 csv files, not %v", pgcLogPref, len(csvFiles))
+	if len(csvFiles)-prevLen != 1 {
+		t.Fatalf("%v: expected 1 new csv file, not %v", pgcLogPref, len(csvFiles)-prevLen)
 	}
 
-	if strings.Compare(csvFiles[0].Name, "testName") != 0 {
+	if strings.Compare(csvFiles[len(csvFiles)-1].Name, "testName") != 0 {
 		t.Fatalf("%v: csv file's name doesn't match the test csv file", pgcLogPref)
 	}
 
@@ -113,8 +145,16 @@ func Test_CsvFile(t *testing.T) {
 		t.Fatalf("%v: list csv files err: %v", pgcLogPref, err)
 	}
 
-	if len(csvFiles) != 1 {
-		t.Fatalf("%v: expected 1 csv file, not %v", pgcLogPref, len(csvFiles))
+	if len(csvFiles) != prevLen {
+		if prevLen != 1 {
+			t.Fatalf("%v: expected %v csv files, not %v", pgcLogPref, prevLen, len(csvFiles))
+		} else {
+			t.Fatalf("%v: expected %v csv file, not %v", pgcLogPref, prevLen, len(csvFiles))
+		}
+	}
+
+	if err := pgcln.removeLastAccount(); err != nil {
+		t.Fatalf("%v: remove last account err: %v", pgcLogPref, err)
 	}
 }
 
