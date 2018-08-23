@@ -41,6 +41,7 @@ func Test_Account(t *testing.T) {
 	if err := pgcln.AddAccount(testAccount); err != nil {
 		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
+	defer pgcln.removeLastAccount()
 
 	accounts, err = pgcln.ListAccounts()
 	if err != nil {
@@ -53,23 +54,6 @@ func Test_Account(t *testing.T) {
 
 	if strings.Compare(accounts[len(accounts)-1].GcpAccountInfo, "testInfo") != 0 {
 		t.Fatalf("%v: account's info doesn't match the test account", pgcLogPref)
-	}
-
-	if err := pgcln.removeLastAccount(); err != nil {
-		t.Fatalf("%v: remove last account err: %v", pgcLogPref, err)
-	}
-
-	accounts, err = pgcln.ListAccounts()
-	if err != nil {
-		t.Fatalf("%v: list accounts err: %v", pgcLogPref, err)
-	}
-
-	if len(accounts) != prevLen {
-		if prevLen != 1 {
-			t.Fatalf("%v: expected %v accounts, not %v", pgcLogPref, prevLen, len(accounts))
-		} else {
-			t.Fatalf("%v: expected %v account, not %v", pgcLogPref, prevLen, len(accounts))
-		}
 	}
 }
 
@@ -105,6 +89,7 @@ func Test_CsvFile(t *testing.T) {
 	if err := pgcln.AddAccount(testAccount); err != nil {
 		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
+	defer pgcln.removeLastAccount()
 
 	accounts, err := pgcln.ListAccounts()
 	if err != nil {
@@ -122,6 +107,7 @@ func Test_CsvFile(t *testing.T) {
 	if err := pgcln.AddCsvFile(testCsvFile); err != nil {
 		t.Fatalf("%v: add csv file err: %v", pgcLogPref, err)
 	}
+	defer pgcln.removeLastCsvFile()
 
 	csvFiles, err = pgcln.ListCsvFiles()
 	if err != nil {
@@ -134,27 +120,6 @@ func Test_CsvFile(t *testing.T) {
 
 	if strings.Compare(csvFiles[len(csvFiles)-1].Name, "testName") != 0 {
 		t.Fatalf("%v: csv file's name doesn't match the test csv file", pgcLogPref)
-	}
-
-	if err := pgcln.removeLastCsvFile(); err != nil {
-		t.Fatalf("%v: remove last csv file err: %v", pgcLogPref, err)
-	}
-
-	csvFiles, err = pgcln.ListCsvFiles()
-	if err != nil {
-		t.Fatalf("%v: list csv files err: %v", pgcLogPref, err)
-	}
-
-	if len(csvFiles) != prevLen {
-		if prevLen != 1 {
-			t.Fatalf("%v: expected %v csv files, not %v", pgcLogPref, prevLen, len(csvFiles))
-		} else {
-			t.Fatalf("%v: expected %v csv file, not %v", pgcLogPref, prevLen, len(csvFiles))
-		}
-	}
-
-	if err := pgcln.removeLastAccount(); err != nil {
-		t.Fatalf("%v: remove last account err: %v", pgcLogPref, err)
 	}
 }
 
@@ -190,6 +155,7 @@ func Test_Bill(t *testing.T) {
 	if err := pgcln.AddAccount(testAccount); err != nil {
 		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
+	defer pgcln.removeLastAccount()
 
 	accounts, err := pgcln.ListAccounts()
 	if err != nil {
@@ -207,6 +173,7 @@ func Test_Bill(t *testing.T) {
 	if err := pgcln.AddCsvFile(testCsvFile); err != nil {
 		t.Fatalf("%v: add csv file err: %v", pgcLogPref, err)
 	}
+	defer pgcln.removeLastCsvFile()
 
 	csvFiles, err := pgcln.ListCsvFiles()
 	if err != nil {
@@ -240,9 +207,20 @@ func Test_Bill(t *testing.T) {
 	if err := pgcln.AddBill(testBill1); err != nil {
 		t.Fatalf("%v: add bill err: %v", pgcLogPref, err)
 	}
+	defer pgcln.removeLastBill()
 
 	if err := pgcln.AddBill(testBill2); err != nil {
 		t.Fatalf("%v: add bill err: %v", pgcLogPref, err)
+	}
+	defer pgcln.removeLastBill()
+
+	bills, err = pgcln.ListAllBills()
+	if err != nil {
+		t.Fatalf("%v: list all bills err: %v", pgcLogPref, err)
+	}
+
+	if len(bills)-prevLen != 2 {
+		t.Fatalf("%v: expected 2 new bills, not %v", pgcLogPref, len(bills)-prevLen)
 	}
 
 	lastBill, err := pgcln.GetLastBill()
@@ -287,32 +265,5 @@ func Test_Bill(t *testing.T) {
 
 	if strings.Compare(testBill1.Description, bills[0].Description) != 0 {
 		t.Fatalf("%v: bill's description doesn't match the test bill", pgcLogPref)
-	}
-
-	for i := 0; i < 2; i++ {
-		if err := pgcln.removeLastBill(); err != nil {
-			t.Fatalf("%v: remove last bill err: %v", pgcLogPref, err)
-		}
-	}
-
-	bills, err = pgcln.ListAllBills()
-	if err != nil {
-		t.Fatalf("%v: list all bills err: %v", pgcLogPref, err)
-	}
-
-	if len(bills) != prevLen {
-		if prevLen != 1 {
-			t.Fatalf("%v: expected %v bills, not %v", pgcLogPref, prevLen, len(bills))
-		} else {
-			t.Fatalf("%v: expected %v bill, not %v", pgcLogPref, prevLen, len(bills))
-		}
-	}
-
-	if err := pgcln.removeLastCsvFile(); err != nil {
-		t.Fatalf("%v: remove last csv file err: %v", pgcLogPref, err)
-	}
-
-	if err := pgcln.removeLastAccount(); err != nil {
-		t.Fatalf("%v: remove last account err: %v", pgcLogPref, err)
 	}
 }
