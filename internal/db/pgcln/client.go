@@ -235,8 +235,6 @@ func (c *Client) ListBillsByTime(start, end time.Time) (ServiceBills, error) {
 // ListBillsByService returns bills from db that are related to specified GCP service
 // If service is an empty string then all bills will be returned
 func (c *Client) ListBillsByService(service string) (ServiceBills, error) {
-	service = fmt.Sprintf("%%%v%%", service)
-
 	rows, err := c.queries["selectBillsByService"].QueryContext(context.Background(), service)
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
@@ -250,8 +248,6 @@ func (c *Client) ListBillsByService(service string) (ServiceBills, error) {
 // ListBillsByProject returns bills from db that are related to specified GCP project
 // If project is an empty string then all bills will be returned
 func (c *Client) ListBillsByProject(project string) (ServiceBills, error) {
-	project = fmt.Sprintf("%%%v%%", project)
-
 	rows, err := c.queries["selectBillsByProject"].QueryContext(context.Background(), project)
 	if err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)

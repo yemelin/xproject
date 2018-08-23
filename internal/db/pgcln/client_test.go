@@ -115,7 +115,7 @@ func Test_CsvFile(t *testing.T) {
 		ID:          1,
 		Name:        "testName",
 		Bucket:      "testBucket",
-		TimeCreated: time.Date(2018, 1, 1, 0, 0, 0, 0, time.Local),
+		TimeCreated: time.Date(2078, 1, 1, 0, 0, 0, 0, time.Local),
 		AccountID:   accounts[len(accounts)-1].ID,
 	}
 
@@ -158,8 +158,8 @@ func Test_CsvFile(t *testing.T) {
 	}
 }
 
-// Test_ListAllBills checks if ListAllBills returns correct bills from db based on test data
-func Test_ListAllBills(t *testing.T) {
+// Test_Bill tests all functions that are related to adding, listing and removing service bills
+func Test_Bill(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
@@ -180,163 +180,139 @@ func Test_ListAllBills(t *testing.T) {
 		t.Fatalf("%v: list all bills err: %v", pgcLogPref, err)
 	}
 
-	if len(bills) != 1 {
-		t.Fatalf("%v: expected 1 bill, not %v", pgcLogPref, len(bills))
+	prevLen := len(bills)
+
+	testAccount := GcpAccount{
+		ID:             1,
+		GcpAccountInfo: "testInfo",
 	}
 
-	if strings.Compare(bills[0].LineItem, "test_service") != 0 {
-		t.Fatalf("%v: bill's line item doesn't match 'test_service'", pgcLogPref)
-	}
-}
-
-// Test_ListBillsByTime checks if ListBillsByTime() returns bills from non-empty db
-func Test_ListBillsByTime(t *testing.T) {
-	conf := Config{
-		Host:     os.Getenv(EnvDBHost),
-		Port:     os.Getenv(EnvDBPort),
-		DB:       os.Getenv(EnvDBName),
-		User:     os.Getenv(EnvDBUser),
-		Password: os.Getenv(EnvDBPwd),
-		SSLMode:  "disable",
+	if err := pgcln.AddAccount(testAccount); err != nil {
+		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
 
-	pgcln, err := New(conf)
+	accounts, err := pgcln.ListAccounts()
 	if err != nil {
-		t.Fatalf("%v: new client err, %v", pgcLogPref, err)
+		t.Fatalf("%v: list accounts err: %v", pgcLogPref, err)
 	}
-	defer pgcln.Close()
 
-	start, err := time.Parse(time.RFC3339, "2000-01-01T00:00:00-07:00")
+	testCsvFile := GcpCsvFile{
+		ID:          1,
+		Name:        "testName",
+		Bucket:      "testBucket",
+		TimeCreated: time.Date(2078, 1, 1, 0, 0, 0, 0, time.Local),
+		AccountID:   accounts[len(accounts)-1].ID,
+	}
+
+	if err := pgcln.AddCsvFile(testCsvFile); err != nil {
+		t.Fatalf("%v: add csv file err: %v", pgcLogPref, err)
+	}
+
+	csvFiles, err := pgcln.ListCsvFiles()
 	if err != nil {
-		t.Fatalf("%v: time parse err, %v", pgcLogPref, err)
+		t.Fatalf("%v: list csv file err: %v", pgcLogPref, err)
 	}
 
-	end := time.Now()
-
-	bills, err := pgcln.ListBillsByTime(start, end)
-	if err != nil {
-		t.Fatalf("%v: list bills err: %v", pgcLogPref, err)
-	}
-
-	if len(bills) == 0 {
-		t.Fatalf("%v: expected non-empty list, but no bills were listed", pgcLogPref)
-	}
-
-	if strings.Compare(bills[0].LineItem, "test_service") != 0 {
-		t.Fatalf("%v: bill's line item doesn't match 'test_service'", pgcLogPref)
-	}
-}
-
-// Test_AddBill_removeLastBill tests adding bill into db, listing it by service and removing it
-func Test_AddBill_removeLastBill(t *testing.T) {
-	conf := Config{
-		Host:     os.Getenv(EnvDBHost),
-		Port:     os.Getenv(EnvDBPort),
-		DB:       os.Getenv(EnvDBName),
-		User:     os.Getenv(EnvDBUser),
-		Password: os.Getenv(EnvDBPwd),
-		SSLMode:  "disable",
-	}
-
-	pgcln, err := New(conf)
-	if err != nil {
-		t.Fatalf("%v: new client err, %v", pgcLogPref, err)
-	}
-	defer pgcln.Close()
-
-	testBill := ServiceBill{
+	testBill1 := ServiceBill{
 		ID:           1,
-		LineItem:     "testItem",
-		StartTime:    time.Now(),
-		EndTime:      time.Now(),
+		LineItem:     "testItem1",
+		StartTime:    time.Date(2077, 1, 1, 0, 0, 0, 0, time.Local),
+		EndTime:      time.Date(2077, 1, 1, 1, 0, 0, 0, time.Local),
 		Cost:         123.456,
-		Currency:     "testCurrency",
-		ProjectID:    "testProject",
-		Description:  "testDescription",
-		GcpCsvFileID: 1,
+		Currency:     "testCurrency1",
+		ProjectID:    "testProject1",
+		Description:  "testDescription1",
+		GcpCsvFileID: csvFiles[len(csvFiles)-1].ID,
 	}
 
-	if err := pgcln.AddBill(testBill); err != nil {
+	testBill2 := ServiceBill{
+		ID:           2,
+		LineItem:     "testItem2",
+		StartTime:    time.Date(2078, 1, 1, 0, 0, 0, 0, time.Local),
+		EndTime:      time.Date(2078, 1, 1, 1, 0, 0, 0, time.Local),
+		Cost:         456.789,
+		Currency:     "testCurrency2",
+		ProjectID:    "testProject2",
+		Description:  "testDescription2",
+		GcpCsvFileID: csvFiles[len(csvFiles)-1].ID,
+	}
+
+	if err := pgcln.AddBill(testBill1); err != nil {
 		t.Fatalf("%v: add bill err: %v", pgcLogPref, err)
 	}
 
-	bills, err := pgcln.ListBillsByService("estIte")
+	if err := pgcln.AddBill(testBill2); err != nil {
+		t.Fatalf("%v: add bill err: %v", pgcLogPref, err)
+	}
+
+	lastBill, err := pgcln.GetLastBill()
 	if err != nil {
-		t.Fatalf("%v: list bills err: %v", pgcLogPref, err)
+		t.Fatalf("%v: get last bill err: %v", pgcLogPref, err)
 	}
 
-	if len(bills) != 1 {
-		t.Fatalf("%v: expected 1 bill, not %v", pgcLogPref, len(bills))
-	}
-
-	if strings.Compare(bills[0].LineItem, "testItem") != 0 || strings.Compare(bills[0].ProjectID, "testProject") != 0 {
-		t.Fatalf("%v: bill's line item doesn't match the test bill", pgcLogPref)
-	}
-
-	if err := pgcln.removeLastBill(); err != nil {
-		t.Fatalf("%v: remove last bill err: %v", pgcLogPref, err)
+	if strings.Compare(testBill2.LineItem, lastBill.LineItem) != 0 || strings.Compare(testBill2.ProjectID, lastBill.ProjectID) != 0 {
+		t.Fatalf("%v: last bill doesn't match the test bill", pgcLogPref)
 	}
 
 	bills, err = pgcln.ListBillsByService("testItem")
 	if err != nil {
-		t.Fatalf("%v: list bills err: %v", pgcLogPref, err)
+		t.Fatalf("%v: list bills by service err: %v", pgcLogPref, err)
 	}
 
-	if len(bills) != 0 {
-		t.Fatalf("%v: expected 0 bills, not %v", pgcLogPref, len(bills))
-	}
-}
-
-// Test_ListBillsByProject checks if ListBillsByProject() returns correct bill from db by project
-func Test_ListBillsByProject(t *testing.T) {
-	conf := Config{
-		Host:     os.Getenv(EnvDBHost),
-		Port:     os.Getenv(EnvDBPort),
-		DB:       os.Getenv(EnvDBName),
-		User:     os.Getenv(EnvDBUser),
-		Password: os.Getenv(EnvDBPwd),
-		SSLMode:  "disable",
+	if len(bills) != 2 {
+		t.Fatalf("%v: expected 2 bills, not %v", pgcLogPref, len(bills))
 	}
 
-	pgcln, err := New(conf)
+	bills, err = pgcln.ListBillsByTime(time.Date(2077, 12, 31, 0, 0, 0, 0, time.Local), time.Date(2078, 1, 15, 0, 0, 0, 0, time.Local))
 	if err != nil {
-		t.Fatalf("%v: new client err, %v", pgcLogPref, err)
+		t.Fatalf("%v: list bills by time err: %v", pgcLogPref, err)
 	}
-	defer pgcln.Close()
 
-	bill, err := pgcln.ListBillsByProject("test_project")
+	if len(bills) != 1 {
+		t.Fatalf("%v: expected 1 bill, not %v", pgcLogPref, len(bills))
+	}
+
+	if strings.Compare(testBill2.Description, bills[0].Description) != 0 {
+		t.Fatalf("%v: bill's description doesn't match the test bill", pgcLogPref)
+	}
+
+	bills, err = pgcln.ListBillsByProject("testProject1")
 	if err != nil {
-		t.Fatalf("%v: list bills err: %v", pgcLogPref, err)
+		t.Fatalf("%v: list bills by project err: %v", pgcLogPref, err)
 	}
 
-	if strings.Compare(bill[0].LineItem, "test_service") != 0 {
-		t.Fatalf("%v: bill's line item doesn't match 'test_service'", pgcLogPref)
-	}
-}
-
-// Test_GetLastBill checks if GetLastBill() returns the last bill based on test data from db
-func Test_GetLastBill(t *testing.T) {
-	conf := Config{
-		Host:     os.Getenv(EnvDBHost),
-		Port:     os.Getenv(EnvDBPort),
-		DB:       os.Getenv(EnvDBName),
-		User:     os.Getenv(EnvDBUser),
-		Password: os.Getenv(EnvDBPwd),
-		SSLMode:  "disable",
+	if len(bills) != 1 {
+		t.Fatalf("%v: expected 1 bill, not %v", pgcLogPref, len(bills))
 	}
 
-	pgcln, err := New(conf)
+	if strings.Compare(testBill1.Description, bills[0].Description) != 0 {
+		t.Fatalf("%v: bill's description doesn't match the test bill", pgcLogPref)
+	}
+
+	for i := 0; i < 2; i++ {
+		if err := pgcln.removeLastBill(); err != nil {
+			t.Fatalf("%v: remove last bill err: %v", pgcLogPref, err)
+		}
+	}
+
+	bills, err = pgcln.ListAllBills()
 	if err != nil {
-		t.Fatalf("%v: new client err, %v", pgcLogPref, err)
-	}
-	defer pgcln.Close()
-
-	bill, err := pgcln.GetLastBill()
-	if err != nil {
-		t.Fatalf("%v: list bills err: %v", pgcLogPref, err)
+		t.Fatalf("%v: list all bills err: %v", pgcLogPref, err)
 	}
 
-	if strings.Compare(bill.ProjectID, "test_project") != 0 {
-		t.Fatalf("%v: bill's project id doesn't match 'test_project'", pgcLogPref)
+	if len(bills) != prevLen {
+		if prevLen != 1 {
+			t.Fatalf("%v: expected %v bills, not %v", pgcLogPref, prevLen, len(bills))
+		} else {
+			t.Fatalf("%v: expected %v bill, not %v", pgcLogPref, prevLen, len(bills))
+		}
+	}
+
+	if err := pgcln.removeLastCsvFile(); err != nil {
+		t.Fatalf("%v: remove last csv file err: %v", pgcLogPref, err)
+	}
+
+	if err := pgcln.removeLastAccount(); err != nil {
+		t.Fatalf("%v: remove last account err: %v", pgcLogPref, err)
 	}
 }

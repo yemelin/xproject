@@ -58,13 +58,13 @@ func (c *Client) prepareQueries() error {
 		return err
 	}
 
-	c.queries["selectBillsByService"], err = c.idb.PrepareContext(context.Background(), "SELECT * FROM xproject.service_bills WHERE line_item LIKE $1 ORDER BY id ASC")
+	c.queries["selectBillsByService"], err = c.idb.PrepareContext(context.Background(), "SELECT * FROM xproject.service_bills WHERE line_item LIKE '%' || $1 || '%' ORDER BY id ASC")
 	if err != nil {
 		log.Printf("%v: prepare err, %v", pgcLogPref, err)
 		return err
 	}
 
-	c.queries["selectBillsByProject"], err = c.idb.PrepareContext(context.Background(), "SELECT * FROM xproject.service_bills WHERE project_id LIKE $1 ORDER BY id ASC")
+	c.queries["selectBillsByProject"], err = c.idb.PrepareContext(context.Background(), "SELECT * FROM xproject.service_bills WHERE project_id LIKE '%' || $1 || '%' ORDER BY id ASC")
 	if err != nil {
 		log.Printf("%v: prepare err, %v", pgcLogPref, err)
 		return err
