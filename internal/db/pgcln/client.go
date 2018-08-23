@@ -98,7 +98,8 @@ func combineCsvFiles(rows *sql.Rows) (GcpCsvFiles, error) {
 	var row GcpCsvFile
 
 	for rows.Next() {
-		if err := rows.Scan(&row.ID, &row.Name, &row.Bucket, &row.TimeCreated, &row.AccountID); err != nil {
+		if err := rows.Scan(&row.ID, &row.Name, &row.Bucket, &row.TimeCreated,
+			&row.AccountID); err != nil {
 			log.Printf("%v: db scan err, %v", pgcLogPref, err)
 			return nil, err
 		}
@@ -115,7 +116,8 @@ func combineBills(rows *sql.Rows) (ServiceBills, error) {
 	var row ServiceBill
 
 	for rows.Next() {
-		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
+		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost,
+			&row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
 			log.Printf("%v: db scan err, %v", pgcLogPref, err)
 			return nil, err
 		}
@@ -154,7 +156,8 @@ func (c *Client) ListAccounts() (GcpAccounts, error) {
 
 // AddAccount adds account into db
 func (c *Client) AddAccount(account GcpAccount) error {
-	if _, err := c.queries["insertIntoAccounts"].ExecContext(context.Background(), account.GcpAccountInfo); err != nil {
+	if _, err := c.queries["insertIntoAccounts"].ExecContext(context.Background(),
+		account.GcpAccountInfo); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -186,7 +189,8 @@ func (c *Client) ListCsvFiles() (GcpCsvFiles, error) {
 
 // AddCsvFile adds CSV file into db
 func (c *Client) AddCsvFile(file GcpCsvFile) error {
-	if _, err := c.queries["insertIntoCsvFiles"].ExecContext(context.Background(), file.Name, file.Bucket, file.TimeCreated, file.AccountID); err != nil {
+	if _, err := c.queries["insertIntoCsvFiles"].ExecContext(context.Background(),
+		file.Name, file.Bucket, file.TimeCreated, file.AccountID); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -270,7 +274,8 @@ func (c *Client) GetLastBill() (ServiceBill, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
+		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost,
+			&row.Currency, &row.ProjectID, &row.Description, &row.GcpCsvFileID); err != nil {
 			log.Printf("%v: db scan err, %v", pgcLogPref, err)
 			return row, err
 		}
@@ -281,7 +286,9 @@ func (c *Client) GetLastBill() (ServiceBill, error) {
 
 // AddBill adds bill into db
 func (c *Client) AddBill(bill ServiceBill) error {
-	if _, err := c.queries["insertIntoBills"].ExecContext(context.Background(), bill.LineItem, bill.StartTime, bill.EndTime, bill.Cost, bill.Currency, bill.ProjectID, bill.Description, bill.GcpCsvFileID); err != nil {
+	if _, err := c.queries["insertIntoBills"].ExecContext(context.Background(), bill.LineItem,
+		bill.StartTime, bill.EndTime, bill.Cost, bill.Currency, bill.ProjectID, bill.Description,
+		bill.GcpCsvFileID); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}

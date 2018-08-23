@@ -228,7 +228,8 @@ func Test_Bill(t *testing.T) {
 		t.Fatalf("%v: get last bill err: %v", pgcLogPref, err)
 	}
 
-	if strings.Compare(testBill2.LineItem, lastBill.LineItem) != 0 || strings.Compare(testBill2.ProjectID, lastBill.ProjectID) != 0 {
+	if strings.Compare(testBill2.LineItem, lastBill.LineItem) != 0 ||
+		strings.Compare(testBill2.ProjectID, lastBill.ProjectID) != 0 {
 		t.Fatalf("%v: last bill doesn't match the test bill", pgcLogPref)
 	}
 
@@ -241,7 +242,8 @@ func Test_Bill(t *testing.T) {
 		t.Fatalf("%v: expected 2 bills, not %v", pgcLogPref, len(bills))
 	}
 
-	bills, err = pgcln.ListBillsByTime(time.Date(2077, 12, 31, 0, 0, 0, 0, time.Local), time.Date(2078, 1, 15, 0, 0, 0, 0, time.Local))
+	bills, err = pgcln.ListBillsByTime(time.Date(2077, 12, 31, 0, 0, 0, 0, time.Local),
+		time.Date(2078, 1, 15, 0, 0, 0, 0, time.Local))
 	if err != nil {
 		t.Fatalf("%v: list bills by time err: %v", pgcLogPref, err)
 	}
