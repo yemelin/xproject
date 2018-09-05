@@ -11,11 +11,8 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
-	"log"
-	"os"
 
 	"cloud.google.com/go/storage"
-	"github.com/pavlov-tony/xproject/internal/db/pgcln"
 	"github.com/pavlov-tony/xproject/pkg/cloud/gcpparser"
 	"github.com/pavlov-tony/xproject/pkg/cloud/gcptypes"
 	"google.golang.org/api/iterator"
@@ -27,8 +24,8 @@ const contentTypeCsv = "text/csv"
 // Client for GCP predictions which stores google api as fileds
 type Client struct {
 	strgCln *storage.Client
-	pgCln   *pgcln.Client
-	ctx     context.Context
+	// pgCln   *pgcln.Client
+	ctx context.Context
 }
 
 type Report struct {
@@ -48,19 +45,19 @@ func NewClient(ctx context.Context) (*Client, error) {
 	c.ctx = ctx
 	c.strgCln = strgCln
 
-	// init new pg client
-	conf := pgcln.Config{
-		Host:     os.Getenv(pgcln.EnvDBHost),
-		Port:     os.Getenv(pgcln.EnvDBPort),
-		DB:       os.Getenv(pgcln.EnvDBName),
-		User:     os.Getenv(pgcln.EnvDBUser),
-		Password: os.Getenv(pgcln.EnvDBPwd),
-		SSLMode:  "disable",
-	}
-	c.pgCln, err = pgcln.New(conf)
-	if err != nil {
-		log.Fatalf("in fetch pgcln.New: %v", err)
-	}
+	// // init new pg client
+	// conf := pgcln.Config{
+	// 	Host:     os.Getenv(pgcln.EnvDBHost),
+	// 	Port:     os.Getenv(pgcln.EnvDBPort),
+	// 	DB:       os.Getenv(pgcln.EnvDBName),
+	// 	User:     os.Getenv(pgcln.EnvDBUser),
+	// 	Password: os.Getenv(pgcln.EnvDBPwd),
+	// 	SSLMode:  "disable",
+	// }
+	// c.pgCln, err = pgcln.New(conf)
+	// if err != nil {
+	// 	log.Fatalf("in fetch pgcln.New: %v", err)
+	// }
 
 	return c, nil
 }

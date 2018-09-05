@@ -1,5 +1,7 @@
 package gcpcln
 
+// import "time"
+//
 // // Object represents csv objects (files) from gcp
 // type Object struct {
 // 	Name    string
