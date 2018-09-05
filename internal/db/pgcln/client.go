@@ -46,7 +46,7 @@ type Client struct {
 }
 
 // New inits client
-func New(conf Config) (*Client, error) {
+func New(ctx context.Context, conf Config) (*Client, error) {
 	c := &Client{
 		conf: conf,
 	}
@@ -66,7 +66,7 @@ func New(conf Config) (*Client, error) {
 	c.idb = db
 
 	// prepare queries
-	err = c.prepareQueries()
+	err = c.prepareQueries(ctx)
 	if err != nil {
 		log.Printf("%v: prepare queries err, %v", pgcLogPref, err)
 		return nil, err

@@ -1,6 +1,7 @@
 package pgcln
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -20,7 +21,7 @@ func Test_Account(t *testing.T) {
 		SSLMode:  "disable",
 	}
 
-	pgcln, err := New(conf)
+	pgcln, err := New(context.Background(), conf)
 	if err != nil {
 		t.Fatalf("%v: new client err, %v", pgcLogPref, err)
 	}
@@ -68,7 +69,7 @@ func Test_CsvFile(t *testing.T) {
 		SSLMode:  "disable",
 	}
 
-	pgcln, err := New(conf)
+	pgcln, err := New(context.Background(), conf)
 	if err != nil {
 		t.Fatalf("%v: new client err, %v", pgcLogPref, err)
 	}
@@ -156,7 +157,7 @@ func Test_Bill(t *testing.T) {
 		SSLMode:  "disable",
 	}
 
-	pgcln, err := New(conf)
+	pgcln, err := New(context.Background(), conf)
 	if err != nil {
 		t.Fatalf("%v: new client err, %v", pgcLogPref, err)
 	}
