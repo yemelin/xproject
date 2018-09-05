@@ -38,6 +38,13 @@ func (c *Client) prepareQueries() error {
 		return err
 	}
 
+	c.queries["selectLastCsvFile"], err = c.idb.PrepareContext(context.Background(),
+		"SELECT * FROM xproject.gcp_csv_files ORDER BY time_created DESC LIMIT 1")
+	if err != nil {
+		log.Printf("%v: prepare err, %v", pgcLogPref, err)
+		return err
+	}
+
 	c.queries["insertIntoCsvFiles"], err = c.idb.PrepareContext(context.Background(),
 		"INSERT INTO xproject.gcp_csv_files VALUES(DEFAULT, $1, $2, $3, $4)")
 	if err != nil {

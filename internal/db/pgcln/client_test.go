@@ -57,7 +57,7 @@ func Test_Account(t *testing.T) {
 	}
 }
 
-// Test_CsvFile tests Adding CSV file into db, Listing and removing it
+// Test_CsvFile tests adding CSV file into db, Listing and removing it
 func Test_CsvFile(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
@@ -96,15 +96,28 @@ func Test_CsvFile(t *testing.T) {
 		t.Fatalf("%v: list accounts err: %v", pgcLogPref, err)
 	}
 
-	testCsvFile := GcpCsvFile{
+	testCsvFile1 := GcpCsvFile{
 		ID:          1,
-		Name:        "testName",
-		Bucket:      "testBucket",
+		Name:        "testName1",
+		Bucket:      "testBucket1",
 		TimeCreated: time.Date(2078, 1, 1, 0, 0, 0, 0, time.Local),
 		AccountID:   accounts[len(accounts)-1].ID,
 	}
 
-	if err := pgcln.AddCsvFile(testCsvFile); err != nil {
+	testCsvFile2 := GcpCsvFile{
+		ID:          2,
+		Name:        "testName2",
+		Bucket:      "testBucket2",
+		TimeCreated: time.Date(2077, 1, 1, 0, 0, 0, 0, time.Local),
+		AccountID:   accounts[len(accounts)-1].ID,
+	}
+
+	if err := pgcln.AddCsvFile(testCsvFile1); err != nil {
+		t.Fatalf("%v: add csv file err: %v", pgcLogPref, err)
+	}
+	defer pgcln.removeLastCsvFile()
+
+	if err := pgcln.AddCsvFile(testCsvFile2); err != nil {
 		t.Fatalf("%v: add csv file err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastCsvFile()
@@ -114,12 +127,21 @@ func Test_CsvFile(t *testing.T) {
 		t.Fatalf("%v: list csv file err: %v", pgcLogPref, err)
 	}
 
-	if len(csvFiles)-prevLen != 1 {
-		t.Fatalf("%v: expected 1 new csv file, not %v", pgcLogPref, len(csvFiles)-prevLen)
+	if len(csvFiles)-prevLen != 2 {
+		t.Fatalf("%v: expected 2 new csv files, not %v", pgcLogPref, len(csvFiles)-prevLen)
 	}
 
-	if strings.Compare(csvFiles[len(csvFiles)-1].Name, "testName") != 0 {
+	if strings.Compare(csvFiles[len(csvFiles)-1].Name, "testName2") != 0 {
 		t.Fatalf("%v: csv file's name doesn't match the test csv file", pgcLogPref)
+	}
+
+	lastCsvFile, err := pgcln.GetLastCsvFile()
+	if err != nil {
+		t.Fatalf("%v: get last csv file err: %v", pgcLogPref, err)
+	}
+
+	if strings.Compare(lastCsvFile.Bucket, "testBucket1") != 0 {
+		t.Fatalf("%v: csv file's bucket doesn't match the last csv file", pgcLogPref)
 	}
 }
 

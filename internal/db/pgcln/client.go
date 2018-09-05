@@ -187,6 +187,28 @@ func (c *Client) ListCsvFiles() (GcpCsvFiles, error) {
 	return combineCsvFiles(rows)
 }
 
+// GetLastCsvFile returns last CSV file from db by TimeCreated
+func (c *Client) GetLastCsvFile() (GcpCsvFile, error) {
+	var row GcpCsvFile
+
+	rows, err := c.queries["selectLastCsvFile"].QueryContext(context.Background())
+	if err != nil {
+		log.Printf("%v: db query err, %v", pgcLogPref, err)
+		return row, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(&row.ID, &row.Name, &row.Bucket, &row.TimeCreated,
+			&row.AccountID); err != nil {
+			log.Printf("%v: db scan err, %v", pgcLogPref, err)
+			return row, err
+		}
+	}
+
+	return row, nil
+}
+
 // AddCsvFile adds CSV file into db
 func (c *Client) AddCsvFile(file GcpCsvFile) error {
 	if _, err := c.queries["insertIntoCsvFiles"].ExecContext(context.Background(),
