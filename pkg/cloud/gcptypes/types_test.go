@@ -5,7 +5,8 @@ import (
 	"time"
 )
 
-func Test_Objects_after(t *testing.T) {
+// Test_FilesMetadata_After tests method After of FilesMetadata
+func Test_FilesMetadata_After(t *testing.T) {
 	// empty objects list
 	var files0 FilesMetadata
 	files0 = files0.After(time.Now())
