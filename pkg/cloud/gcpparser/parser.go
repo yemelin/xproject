@@ -1,7 +1,6 @@
-package gcpparser
-
-// This package need for parsing gcp billing csv data
+// Package gcpparser need for parsing gcp billing csv data
 // Also this package store
+package gcpparser
 
 import (
 	"fmt"
@@ -13,17 +12,17 @@ import (
 
 // necessary columns
 const (
-	lineItem    = "Line Item"
-	startTime   = "Start Time"
-	endTime     = "End Time"
-	cost        = "Cost"
-	currency    = "Currency"
-	projectID   = "Project ID"
-	description = "Description"
+	colLineItem    = "Line Item"
+	colStartTime   = "Start Time"
+	colEndTime     = "End Time"
+	colCost        = "Cost"
+	colCurrency    = "Currency"
+	colProjectID   = "Project ID"
+	colDescription = "Description"
 )
 
 // array of necessary columns
-var necesCols = [...]string{lineItem, startTime, endTime, cost, currency, projectID, description}
+var necesCols = [...]string{colLineItem, colStartTime, colEndTime, colCost, colCurrency, colProjectID, colDescription}
 
 // Parse need for parse full GCP csv billing file
 func Parse(data [][]string) (res gcptypes.ServicesBills, err error) {
@@ -44,8 +43,7 @@ func Parse(data [][]string) (res gcptypes.ServicesBills, err error) {
 	}
 
 	// skip headers, handling content line by line
-	data = data[1:]
-	for _, l := range data {
+	for _, l := range data[1:] {
 		sb, err := parseLine(l, tg)
 		if err != nil {
 			return nil, fmt.Errorf("parse: %v", err)
@@ -60,29 +58,29 @@ func Parse(data [][]string) (res gcptypes.ServicesBills, err error) {
 func parseLine(line []string, tg targCols) (*gcptypes.ServiceBill, error) {
 
 	// parse startTime and endTime
-	st, err := time.Parse(time.RFC3339, line[tg[startTime]])
+	st, err := time.Parse(time.RFC3339, line[tg[colStartTime]])
 	if err != nil {
 		return nil, fmt.Errorf("parse line: can not parse StartTime, %v", err)
 	}
-	et, err := time.Parse(time.RFC3339, line[tg[endTime]])
+	et, err := time.Parse(time.RFC3339, line[tg[colEndTime]])
 	if err != nil {
 		return nil, fmt.Errorf("parse line: can not parse EndTime, %v", err)
 	}
 	// parse cost
-	cst, err := strconv.ParseFloat(line[tg[cost]], 64)
+	cst, err := strconv.ParseFloat(line[tg[colCost]], 64)
 	if err != nil {
 		return nil, fmt.Errorf("parse line: can not parse Cost, %v", err)
 	}
 
 	// create new ServiceBill
 	sb := gcptypes.ServiceBill{
-		LineItem:    line[tg[lineItem]],
+		LineItem:    line[tg[colLineItem]],
 		StartTime:   st,
 		EndTime:     et,
 		Cost:        cst,
-		Currency:    line[tg[currency]],
-		ProjectID:   line[tg[projectID]],
-		Description: line[tg[description]],
+		Currency:    line[tg[colCurrency]],
+		ProjectID:   line[tg[colProjectID]],
+		Description: line[tg[colDescription]],
 	}
 
 	return &sb, nil

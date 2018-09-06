@@ -2,7 +2,6 @@
 package gcpparser
 
 import (
-	"bufio"
 	"encoding/csv"
 	"os"
 	"testing"
@@ -16,9 +15,8 @@ func Test_Parse(t *testing.T) {
 	if err != nil {
 		t.Errorf("Can not open test1.csv: %v", err)
 	}
-	defer f.Close()
-	r := bufio.NewReader(f)
-	records, err := csv.NewReader(r).ReadAll()
+	records, err := csv.NewReader(f).ReadAll()
+	f.Close()
 	if err != nil {
 		t.Errorf("can not parse file from bucket: %v", err)
 	}
@@ -44,8 +42,8 @@ func Test_Parse(t *testing.T) {
 	if err != nil {
 		t.Errorf("Can not open test_only_header.csv: %v", err)
 	}
-	r = bufio.NewReader(f)
-	records, err = csv.NewReader(r).ReadAll()
+	records, err = csv.NewReader(f).ReadAll()
+	f.Close()
 	if err != nil {
 		t.Errorf("can not parse file from bucket: %v", err)
 	}
@@ -67,8 +65,8 @@ func Test_Parse(t *testing.T) {
 	if err != nil {
 		t.Errorf("Can not open test_wrong_header.csv: %v", err)
 	}
-	r = bufio.NewReader(f)
-	records, err = csv.NewReader(r).ReadAll()
+	records, err = csv.NewReader(f).ReadAll()
+	f.Close()
 	if err != nil {
 		t.Errorf("Can not parse file from bucket: %v", err)
 	}
@@ -82,5 +80,11 @@ func Test_Parse(t *testing.T) {
 	_, err = Parse(nil)
 	if err == nil {
 		t.Error("Parse nil argument")
+	}
+
+	// parse file with nil headers
+	_, err = Parse([][]string{nil, nil, nil, nil, nil, nil, nil, nil})
+	if err == nil {
+		t.Errorf("Error while parsing [][]string{nil, nil, nil, nil, nil, nil, nil, nil}, expected error")
 	}
 }

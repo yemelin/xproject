@@ -1,6 +1,5 @@
+// Package gcptypes need fo represent gcp types (csv objects metadata and content)
 package gcptypes
-
-// gcptypes package need fo represent gcp types (csv objects metadata and content)
 
 import (
 	"time"
@@ -15,19 +14,20 @@ type FileMetadata struct {
 	AccountID int
 }
 
-// FilesMetadata is a list of Object structures
-type FilesMetadata []FileMetadata
+// FilesMetadata is a list of FileMetadata structures
+type FilesMetadata []*FileMetadata
 
 // ServiceBill represent a composition of main service fields from gcp billing csv file
 // for cost calculation tasks
 type ServiceBill struct {
-	LineItem    string
-	StartTime   time.Time
-	EndTime     time.Time
-	Cost        float64
-	Currency    string
-	ProjectID   string
-	Description string
+	LineItem       string
+	StartTime      time.Time
+	EndTime        time.Time
+	Cost           float64
+	Currency       string
+	ProjectID      string
+	Description    string
+	FileMetadataID int
 }
 
 // ServicesBills is a set of ServiceBill
