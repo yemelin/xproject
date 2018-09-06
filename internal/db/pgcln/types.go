@@ -43,13 +43,13 @@ type IClient interface {
 	ListAccounts() (GcpAccounts, error)
 	AddAccount(GcpAccount) error
 	ListFiles() (gcptypes.FilesMetadata, error)
-	GetLastFile() (gcptypes.FileMetadata, error)
+	GetLastFile() (*gcptypes.FileMetadata, error)
 	AddFile(gcptypes.FileMetadata) error
 	ListAllBills() (gcptypes.ServicesBills, error)
 	ListBillsByTime(time.Time, time.Time) (gcptypes.ServicesBills, error)
 	ListBillsByService(string) (gcptypes.ServicesBills, error)
 	ListBillsByProject(string) (gcptypes.ServicesBills, error)
-	GetLastBill() (gcptypes.ServiceBill, error)
+	GetLastBill() (*gcptypes.ServiceBill, error)
 	AddBill(gcptypes.ServiceBill) error
 	AddReport(gcptypes.Report) error
 }

@@ -189,26 +189,17 @@ func (c *Client) ListFiles() (gcptypes.FilesMetadata, error) {
 	return combineFiles(rows)
 }
 
-// GetLastFile returns last file's metadata from db by Created
-func (c *Client) GetLastFile() (gcptypes.FileMetadata, error) {
+// GetLastFile returns last file's metadata from db by time
+func (c *Client) GetLastFile() (*gcptypes.FileMetadata, error) {
 	var row gcptypes.FileMetadata
 
-	rows, err := c.queries["selectLastCsvFile"].QueryContext(context.Background())
-	if err != nil {
-		log.Printf("%v: db query err, %v", pgcLogPref, err)
-		return row, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		if err := rows.Scan(&row.ID, &row.Name, &row.Bucket, &row.Created,
-			&row.AccountID); err != nil {
-			log.Printf("%v: db scan err, %v", pgcLogPref, err)
-			return row, err
-		}
+	if err := c.queries["selectLastCsvFile"].QueryRowContext(context.Background()).Scan(&row.ID,
+		&row.Name, &row.Bucket, &row.Created, &row.AccountID); err != nil {
+		log.Printf("%v: db scan err, %v", pgcLogPref, err)
+		return nil, err
 	}
 
-	return row, nil
+	return &row, nil
 }
 
 // AddFile adds file's metadata into db
@@ -287,25 +278,17 @@ func (c *Client) ListBillsByProject(project string) (gcptypes.ServicesBills, err
 }
 
 // GetLastBill returns the latest added bill from db by time
-func (c *Client) GetLastBill() (gcptypes.ServiceBill, error) {
+func (c *Client) GetLastBill() (*gcptypes.ServiceBill, error) {
 	var row gcptypes.ServiceBill
 
-	rows, err := c.queries["selectLastBill"].QueryContext(context.Background())
-	if err != nil {
+	if err := c.queries["selectLastBill"].QueryRowContext(context.Background()).Scan(&row.ID,
+		&row.LineItem, &row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID,
+		&row.Description, &row.FileMetadataID); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
-		return row, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost,
-			&row.Currency, &row.ProjectID, &row.Description, &row.FileMetadataID); err != nil {
-			log.Printf("%v: db scan err, %v", pgcLogPref, err)
-			return row, err
-		}
+		return nil, err
 	}
 
-	return row, nil
+	return &row, nil
 }
 
 // AddBill adds bill into db
