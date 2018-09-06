@@ -293,3 +293,120 @@ func Test_Bill(t *testing.T) {
 		t.Fatalf("%v: bill's description doesn't match the test bill", pgcLogPref)
 	}
 }
+
+// Test_Report tests adding report (file's metadata and bills) into db
+func Test_Report(t *testing.T) {
+	conf := Config{
+		Host:     os.Getenv(EnvDBHost),
+		Port:     os.Getenv(EnvDBPort),
+		DB:       os.Getenv(EnvDBName),
+		User:     os.Getenv(EnvDBUser),
+		Password: os.Getenv(EnvDBPwd),
+		SSLMode:  "disable",
+	}
+
+	pgcln, err := New(context.Background(), conf)
+	if err != nil {
+		t.Fatalf("%v: new client err, %v", pgcLogPref, err)
+	}
+	defer pgcln.Close()
+
+	files, err := pgcln.ListFiles()
+	if err != nil {
+		t.Fatalf("%v: list files err: %v", pgcLogPref, err)
+	}
+
+	prevLen1 := len(files)
+
+	bills, err := pgcln.ListAllBills()
+	if err != nil {
+		t.Fatalf("%v: list bills err: %v", pgcLogPref, err)
+	}
+
+	prevLen2 := len(bills)
+
+	testAccount := GcpAccount{
+		ID:             1,
+		GcpAccountInfo: "testInfo",
+	}
+
+	if err := pgcln.AddAccount(testAccount); err != nil {
+		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
+	}
+	defer pgcln.removeLastAccount()
+
+	accounts, err := pgcln.ListAccounts()
+	if err != nil {
+		t.Fatalf("%v: list accounts err: %v", pgcLogPref, err)
+	}
+
+	testFile := gcptypes.FileMetadata{
+		ID:        1,
+		Name:      "testName",
+		Bucket:    "testBucket",
+		Created:   time.Date(2077, 1, 1, 0, 0, 0, 0, time.Local),
+		AccountID: accounts[len(accounts)-1].ID,
+	}
+
+	testBill1 := gcptypes.ServiceBill{
+		ID:             1,
+		LineItem:       "testItem1",
+		StartTime:      time.Date(2077, 1, 1, 0, 0, 0, 0, time.Local),
+		EndTime:        time.Date(2077, 1, 1, 1, 0, 0, 0, time.Local),
+		Cost:           123.456,
+		Currency:       "testCurrency1",
+		ProjectID:      "testProject1",
+		Description:    "testDescription1",
+		FileMetadataID: testFile.ID,
+	}
+
+	testBill2 := gcptypes.ServiceBill{
+		ID:             2,
+		LineItem:       "testItem2",
+		StartTime:      time.Date(2078, 1, 1, 0, 0, 0, 0, time.Local),
+		EndTime:        time.Date(2078, 1, 1, 1, 0, 0, 0, time.Local),
+		Cost:           456.789,
+		Currency:       "testCurrency2",
+		ProjectID:      "testProject2",
+		Description:    "testDescription2",
+		FileMetadataID: testFile.ID,
+	}
+
+	report := gcptypes.Report{
+		Metadata: testFile,
+		Bills:    gcptypes.ServicesBills{&testBill1, &testBill2},
+	}
+
+	if err := pgcln.AddReport(report); err != nil {
+		t.Fatalf("%v: add file err: %v", pgcLogPref, err)
+	}
+	defer pgcln.removeLastFile()
+	defer pgcln.removeLastBill()
+	defer pgcln.removeLastBill()
+
+	files, err = pgcln.ListFiles()
+	if err != nil {
+		t.Fatalf("%v: list file err: %v", pgcLogPref, err)
+	}
+
+	if len(files)-prevLen1 != 1 {
+		t.Fatalf("%v: expected 1 new file, not %v", pgcLogPref, len(files)-prevLen1)
+	}
+
+	if strings.Compare(files[len(files)-1].Name, "testName") != 0 {
+		t.Fatalf("%v: file's name doesn't match the test file", pgcLogPref)
+	}
+
+	bills, err = pgcln.ListAllBills()
+	if err != nil {
+		t.Fatalf("%v: list bills err: %v", pgcLogPref, err)
+	}
+
+	if len(bills)-prevLen2 != 2 {
+		t.Fatalf("%v: expected 2 new bills, not %v", pgcLogPref, len(bills)-prevLen2)
+	}
+
+	if strings.Compare(bills[len(bills)-1].LineItem, "testItem2") != 0 {
+		t.Fatalf("%v: bill's line item doesn't match the test bill", pgcLogPref)
+	}
+}

@@ -51,6 +51,7 @@ type IClient interface {
 	ListBillsByProject(string) (gcptypes.ServicesBills, error)
 	GetLastBill() (gcptypes.ServiceBill, error)
 	AddBill(gcptypes.ServiceBill) error
+	AddReport(gcptypes.Report) error
 }
 
 // GcpAccount contains information about GCP user account

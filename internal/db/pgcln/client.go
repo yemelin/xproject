@@ -320,6 +320,31 @@ func (c *Client) AddBill(bill gcptypes.ServiceBill) error {
 	return nil
 }
 
+// AddReport adds file's metadata and bills into db
+func (c *Client) AddReport(report gcptypes.Report) error {
+	if err := c.AddFile(report.Metadata); err != nil {
+		log.Printf("%v: add file err, %v", pgcLogPref, err)
+		return err
+	}
+
+	files, err := c.ListFiles()
+	if err != nil {
+		log.Printf("%v: list files err, %v", pgcLogPref, err)
+		return err
+	}
+
+	for _, bill := range report.Bills {
+		bill.FileMetadataID = files[len(files)-1].ID
+
+		if err := c.AddBill(*bill); err != nil {
+			log.Printf("%v: add bill err, %v", pgcLogPref, err)
+			return err
+		}
+	}
+
+	return nil
+}
+
 // removeLastBill removes the latest added bill from db
 func (c *Client) removeLastBill() error {
 	if _, err := c.queries["deleteFromBills"].ExecContext(context.Background()); err != nil {
