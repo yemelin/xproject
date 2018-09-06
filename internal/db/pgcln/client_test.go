@@ -8,6 +8,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/pavlov-tony/xproject/pkg/cloud/gcptypes"
 )
 
 // Test_Account tests adding account into db, listing and removing it
@@ -58,8 +59,8 @@ func Test_Account(t *testing.T) {
 	}
 }
 
-// Test_CsvFile tests adding CSV file into db, Listing and removing it
-func Test_CsvFile(t *testing.T) {
+// Test_FileMetadata tests adding file's metadata into db, listing and removing it
+func Test_FileMetadata(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
@@ -75,12 +76,12 @@ func Test_CsvFile(t *testing.T) {
 	}
 	defer pgcln.Close()
 
-	csvFiles, err := pgcln.ListCsvFiles()
+	files, err := pgcln.ListFiles()
 	if err != nil {
-		t.Fatalf("%v: list csv file err: %v", pgcLogPref, err)
+		t.Fatalf("%v: list files err: %v", pgcLogPref, err)
 	}
 
-	prevLen := len(csvFiles)
+	prevLen := len(files)
 
 	testAccount := GcpAccount{
 		ID:             1,
@@ -97,52 +98,52 @@ func Test_CsvFile(t *testing.T) {
 		t.Fatalf("%v: list accounts err: %v", pgcLogPref, err)
 	}
 
-	testCsvFile1 := GcpCsvFile{
-		ID:          1,
-		Name:        "testName1",
-		Bucket:      "testBucket1",
-		TimeCreated: time.Date(2078, 1, 1, 0, 0, 0, 0, time.Local),
-		AccountID:   accounts[len(accounts)-1].ID,
+	testFile1 := gcptypes.FileMetadata{
+		ID:        1,
+		Name:      "testName1",
+		Bucket:    "testBucket1",
+		Created:   time.Date(2078, 1, 1, 0, 0, 0, 0, time.Local),
+		AccountID: accounts[len(accounts)-1].ID,
 	}
 
-	testCsvFile2 := GcpCsvFile{
-		ID:          2,
-		Name:        "testName2",
-		Bucket:      "testBucket2",
-		TimeCreated: time.Date(2077, 1, 1, 0, 0, 0, 0, time.Local),
-		AccountID:   accounts[len(accounts)-1].ID,
+	testFile2 := gcptypes.FileMetadata{
+		ID:        2,
+		Name:      "testName2",
+		Bucket:    "testBucket2",
+		Created:   time.Date(2077, 1, 1, 0, 0, 0, 0, time.Local),
+		AccountID: accounts[len(accounts)-1].ID,
 	}
 
-	if err := pgcln.AddCsvFile(testCsvFile1); err != nil {
-		t.Fatalf("%v: add csv file err: %v", pgcLogPref, err)
+	if err := pgcln.AddFile(testFile1); err != nil {
+		t.Fatalf("%v: add file err: %v", pgcLogPref, err)
 	}
-	defer pgcln.removeLastCsvFile()
+	defer pgcln.removeLastFile()
 
-	if err := pgcln.AddCsvFile(testCsvFile2); err != nil {
-		t.Fatalf("%v: add csv file err: %v", pgcLogPref, err)
+	if err := pgcln.AddFile(testFile2); err != nil {
+		t.Fatalf("%v: add file err: %v", pgcLogPref, err)
 	}
-	defer pgcln.removeLastCsvFile()
+	defer pgcln.removeLastFile()
 
-	csvFiles, err = pgcln.ListCsvFiles()
+	files, err = pgcln.ListFiles()
 	if err != nil {
-		t.Fatalf("%v: list csv file err: %v", pgcLogPref, err)
+		t.Fatalf("%v: list file err: %v", pgcLogPref, err)
 	}
 
-	if len(csvFiles)-prevLen != 2 {
-		t.Fatalf("%v: expected 2 new csv files, not %v", pgcLogPref, len(csvFiles)-prevLen)
+	if len(files)-prevLen != 2 {
+		t.Fatalf("%v: expected 2 new files, not %v", pgcLogPref, len(files)-prevLen)
 	}
 
-	if strings.Compare(csvFiles[len(csvFiles)-1].Name, "testName2") != 0 {
-		t.Fatalf("%v: csv file's name doesn't match the test csv file", pgcLogPref)
+	if strings.Compare(files[len(files)-1].Name, "testName2") != 0 {
+		t.Fatalf("%v: file's name doesn't match the test file", pgcLogPref)
 	}
 
-	lastCsvFile, err := pgcln.GetLastCsvFile()
+	lastFile, err := pgcln.GetLastFile()
 	if err != nil {
-		t.Fatalf("%v: get last csv file err: %v", pgcLogPref, err)
+		t.Fatalf("%v: get last file err: %v", pgcLogPref, err)
 	}
 
-	if strings.Compare(lastCsvFile.Bucket, "testBucket1") != 0 {
-		t.Fatalf("%v: csv file's bucket doesn't match the last csv file", pgcLogPref)
+	if strings.Compare(lastFile.Bucket, "testBucket1") != 0 {
+		t.Fatalf("%v: file's bucket doesn't match the last file", pgcLogPref)
 	}
 }
 
@@ -185,46 +186,46 @@ func Test_Bill(t *testing.T) {
 		t.Fatalf("%v: list accounts err: %v", pgcLogPref, err)
 	}
 
-	testCsvFile := GcpCsvFile{
-		ID:          1,
-		Name:        "testName",
-		Bucket:      "testBucket",
-		TimeCreated: time.Date(2078, 1, 1, 0, 0, 0, 0, time.Local),
-		AccountID:   accounts[len(accounts)-1].ID,
+	testFile := gcptypes.FileMetadata{
+		ID:        1,
+		Name:      "testName",
+		Bucket:    "testBucket",
+		Created:   time.Date(2078, 1, 1, 0, 0, 0, 0, time.Local),
+		AccountID: accounts[len(accounts)-1].ID,
 	}
 
-	if err := pgcln.AddCsvFile(testCsvFile); err != nil {
-		t.Fatalf("%v: add csv file err: %v", pgcLogPref, err)
+	if err := pgcln.AddFile(testFile); err != nil {
+		t.Fatalf("%v: add file err: %v", pgcLogPref, err)
 	}
-	defer pgcln.removeLastCsvFile()
+	defer pgcln.removeLastFile()
 
-	csvFiles, err := pgcln.ListCsvFiles()
+	files, err := pgcln.ListFiles()
 	if err != nil {
-		t.Fatalf("%v: list csv file err: %v", pgcLogPref, err)
+		t.Fatalf("%v: list files err: %v", pgcLogPref, err)
 	}
 
-	testBill1 := ServiceBill{
-		ID:           1,
-		LineItem:     "testItem1",
-		StartTime:    time.Date(2077, 1, 1, 0, 0, 0, 0, time.Local),
-		EndTime:      time.Date(2077, 1, 1, 1, 0, 0, 0, time.Local),
-		Cost:         123.456,
-		Currency:     "testCurrency1",
-		ProjectID:    "testProject1",
-		Description:  "testDescription1",
-		GcpCsvFileID: csvFiles[len(csvFiles)-1].ID,
+	testBill1 := gcptypes.ServiceBill{
+		ID:             1,
+		LineItem:       "testItem1",
+		StartTime:      time.Date(2077, 1, 1, 0, 0, 0, 0, time.Local),
+		EndTime:        time.Date(2077, 1, 1, 1, 0, 0, 0, time.Local),
+		Cost:           123.456,
+		Currency:       "testCurrency1",
+		ProjectID:      "testProject1",
+		Description:    "testDescription1",
+		FileMetadataID: files[len(files)-1].ID,
 	}
 
-	testBill2 := ServiceBill{
-		ID:           2,
-		LineItem:     "testItem2",
-		StartTime:    time.Date(2078, 1, 1, 0, 0, 0, 0, time.Local),
-		EndTime:      time.Date(2078, 1, 1, 1, 0, 0, 0, time.Local),
-		Cost:         456.789,
-		Currency:     "testCurrency2",
-		ProjectID:    "testProject2",
-		Description:  "testDescription2",
-		GcpCsvFileID: csvFiles[len(csvFiles)-1].ID,
+	testBill2 := gcptypes.ServiceBill{
+		ID:             2,
+		LineItem:       "testItem2",
+		StartTime:      time.Date(2078, 1, 1, 0, 0, 0, 0, time.Local),
+		EndTime:        time.Date(2078, 1, 1, 1, 0, 0, 0, time.Local),
+		Cost:           456.789,
+		Currency:       "testCurrency2",
+		ProjectID:      "testProject2",
+		Description:    "testDescription2",
+		FileMetadataID: files[len(files)-1].ID,
 	}
 
 	if err := pgcln.AddBill(testBill1); err != nil {

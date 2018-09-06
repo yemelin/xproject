@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"time"
+
+	"github.com/pavlov-tony/xproject/pkg/cloud/gcptypes"
 )
 
 // Check if obj and client implement the interfaces
@@ -40,14 +42,15 @@ type IClient interface {
 	Ping() error
 	ListAccounts() (GcpAccounts, error)
 	AddAccount(GcpAccount) error
-	ListCsvFiles() (GcpCsvFiles, error)
-	AddCsvFile(GcpCsvFile) error
-	ListAllBills() (ServiceBills, error)
-	ListBillsByTime(time.Time, time.Time) (ServiceBills, error)
-	ListBillsByService(string) (ServiceBills, error)
-	ListBillsByProject(string) (ServiceBills, error)
-	GetLastBill() (ServiceBill, error)
-	AddBill(ServiceBill) error
+	ListFiles() (gcptypes.FilesMetadata, error)
+	GetLastFile() (gcptypes.FileMetadata, error)
+	AddFile(gcptypes.FileMetadata) error
+	ListAllBills() (gcptypes.ServicesBills, error)
+	ListBillsByTime(time.Time, time.Time) (gcptypes.ServicesBills, error)
+	ListBillsByService(string) (gcptypes.ServicesBills, error)
+	ListBillsByProject(string) (gcptypes.ServicesBills, error)
+	GetLastBill() (gcptypes.ServiceBill, error)
+	AddBill(gcptypes.ServiceBill) error
 }
 
 // GcpAccount contains information about GCP user account
@@ -56,33 +59,5 @@ type GcpAccount struct {
 	GcpAccountInfo string
 }
 
-// GcpCsvFile contains information about CSV files with billing reports
-type GcpCsvFile struct {
-	ID          int
-	Name        string
-	Bucket      string
-	TimeCreated time.Time
-	AccountID   int
-}
-
-// ServiceBill contains relevant information from billing report
-type ServiceBill struct {
-	ID           int
-	LineItem     string
-	StartTime    time.Time
-	EndTime      time.Time
-	Cost         float64
-	Currency     string
-	ProjectID    string
-	Description  string
-	GcpCsvFileID int
-}
-
 // GcpAccounts is a set of GcpAccount
 type GcpAccounts []*GcpAccount
-
-// GcpCsvFiles is a set of GcpCsvFile
-type GcpCsvFiles []*GcpCsvFile
-
-// ServiceBills is a set of ServiceBill
-type ServiceBills []*ServiceBill
