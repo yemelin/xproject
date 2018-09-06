@@ -14,12 +14,13 @@ type FileMetadata struct {
 	AccountID int
 }
 
-// FilesMetadata is a list of FileMetadata structures
+// FilesMetadata is a list of FileMetadata ptrs to structures
 type FilesMetadata []*FileMetadata
 
 // ServiceBill represent a composition of main service fields from gcp billing csv file
 // for cost calculation tasks
 type ServiceBill struct {
+	ID             int
 	LineItem       string
 	StartTime      time.Time
 	EndTime        time.Time
