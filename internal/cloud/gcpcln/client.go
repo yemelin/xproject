@@ -11,8 +11,10 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
+	"log"
 
 	"cloud.google.com/go/storage"
+	"github.com/pavlov-tony/xproject/internal/db/pgcln"
 	"github.com/pavlov-tony/xproject/pkg/cloud/gcpparser"
 	"github.com/pavlov-tony/xproject/pkg/cloud/gcptypes"
 	"google.golang.org/api/iterator"
@@ -24,19 +26,12 @@ const contentTypeCsv = "text/csv"
 // Client for GCP predictions which stores google api as fileds
 type Client struct {
 	strgCln *storage.Client
-	// pgCln   *pgcln.Client
-	ctx context.Context
+	pgCln   *pgcln.Client
+	ctx     context.Context
 }
-
-type Report struct {
-	Object gcptypes.Object
-	Bills  gcptypes.ServicesBills
-}
-
-type Reports []*Report
 
 // NewClient creates new client for GCP
-func NewClient(ctx context.Context) (*Client, error) {
+func NewClient(ctx context.Context, conf pgcln.Config) (*Client, error) {
 	c := new(Client)
 	strgCln, err := storage.NewClient(ctx)
 	if err != nil {
@@ -46,18 +41,10 @@ func NewClient(ctx context.Context) (*Client, error) {
 	c.strgCln = strgCln
 
 	// // init new pg client
-	// conf := pgcln.Config{
-	// 	Host:     os.Getenv(pgcln.EnvDBHost),
-	// 	Port:     os.Getenv(pgcln.EnvDBPort),
-	// 	DB:       os.Getenv(pgcln.EnvDBName),
-	// 	User:     os.Getenv(pgcln.EnvDBUser),
-	// 	Password: os.Getenv(pgcln.EnvDBPwd),
-	// 	SSLMode:  "disable",
-	// }
-	// c.pgCln, err = pgcln.New(conf)
-	// if err != nil {
-	// 	log.Fatalf("in fetch pgcln.New: %v", err)
-	// }
+	c.pgCln, err = pgcln.New(ctx, conf)
+	if err != nil {
+		log.Fatalf("in fetch pgcln.New: %v", err)
+	}
 
 	return c, nil
 }
@@ -81,7 +68,7 @@ func (c *Client) BucketsList(projectID string) (buckets []string, err error) {
 }
 
 // CsvObjectsList fetches csv ojects list from bucket with prefix
-func (c *Client) CsvObjsList(bktName, prefix string) (objs gcptypes.Objects, err error) {
+func (c *Client) CsvObjsList(bktName, prefix string) (objs gcptypes.FilesMetadata, err error) {
 
 	it := c.strgCln.Bucket(bktName).Objects(c.ctx, &storage.Query{Prefix: prefix})
 	for {
@@ -93,7 +80,7 @@ func (c *Client) CsvObjsList(bktName, prefix string) (objs gcptypes.Objects, err
 			return nil, fmt.Errorf("fetch bucket objects: %v", err)
 		}
 		if o.ContentType == contentTypeCsv {
-			objs = append(objs, gcptypes.Object{Name: o.Name, Bucket: o.Bucket, Created: o.Created})
+			objs = append(objs, &gcptypes.FileMetadata{Name: o.Name, Bucket: o.Bucket, Created: o.Created})
 		}
 	}
 
@@ -115,7 +102,7 @@ func (c *Client) csvObjectContent(bktName, objName string) ([][]string, error) {
 }
 
 // MakeReport creates report from gcp object in cloud for object
-func (c *Client) makeReport(obj gcptypes.Object) (*Report, error) {
+func (c *Client) makeReport(obj gcptypes.FileMetadata) (*gcptypes.Report, error) {
 	data, err := c.csvObjectContent(obj.Bucket, obj.Name)
 	if err != nil {
 		return nil, fmt.Errorf("can not make report: %v", err)
@@ -125,18 +112,18 @@ func (c *Client) makeReport(obj gcptypes.Object) (*Report, error) {
 	if err != nil {
 		return nil, fmt.Errorf("can not make report: %v", err)
 	}
-	rep := Report{
-		Object: obj,
-		Bills:  sbs,
+	rep := gcptypes.Report{
+		Metadata: obj,
+		Bills:    sbs,
 	}
 
 	return &rep, nil
 }
 
 // MakeReports creates reports from gcp object in cloud for objects range
-func (c *Client) MakeReports(objs gcptypes.Objects) (reps Reports, err error) {
+func (c *Client) MakeReports(objs gcptypes.FilesMetadata) (reps gcptypes.Reports, err error) {
 	for _, o := range objs {
-		r, err := c.makeReport(o)
+		r, err := c.makeReport(*o)
 		if err != nil {
 			return nil, fmt.Errorf("can not make reports: %v", err)
 		}

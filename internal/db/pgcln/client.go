@@ -9,7 +9,7 @@ import (
 
 	"github.com/pavlov-tony/xproject/pkg/cloud/gcptypes"
 	// Don't forget add driver importing to main
-	// _ "github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 const (

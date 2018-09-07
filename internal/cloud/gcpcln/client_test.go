@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/pavlov-tony/xproject/internal/db/pgcln"
 	"github.com/pavlov-tony/xproject/pkg/cloud/gcptypes"
 )
 
@@ -18,7 +19,7 @@ import (
 
 func Test_Client_BucketsList(t *testing.T) {
 	ctx := context.Background()
-	cln, err := NewClient(ctx)
+	cln, err := NewClient(ctx, makeConfig())
 	if err != nil {
 		t.Error("ddd")
 	}
@@ -36,7 +37,7 @@ func Test_Client_BucketsList(t *testing.T) {
 
 func Test_Cleint_CsvObjctsList(t *testing.T) {
 	ctx := context.Background()
-	cln, err := NewClient(ctx)
+	cln, err := NewClient(ctx, makeConfig())
 	if err != nil {
 		t.Error("Failed to create client:", err)
 	}
@@ -54,7 +55,7 @@ func Test_Cleint_CsvObjctsList(t *testing.T) {
 
 func Test_Client_csvObjectContent(t *testing.T) {
 	ctx := context.Background()
-	cln, err := NewClient(ctx)
+	cln, err := NewClient(ctx, makeConfig())
 	if err != nil {
 		t.Error("Failed to create client:", err)
 	}
@@ -70,12 +71,12 @@ func Test_Client_csvObjectContent(t *testing.T) {
 
 func Test_Client_makeReport(t *testing.T) {
 	ctx := context.Background()
-	cln, err := NewClient(ctx)
+	cln, err := NewClient(ctx, makeConfig())
 	if err != nil {
 		t.Error("Failed to create client:", err)
 	}
 
-	obj := gcptypes.Object{
+	obj := gcptypes.FileMetadata{
 		Name:   os.Getenv("APP_PROJECT_CSV_OBJECT"),
 		Bucket: os.Getenv("APP_PROJECT_BUCKET")}
 
@@ -87,6 +88,18 @@ func Test_Client_makeReport(t *testing.T) {
 	if len(rep.Bills) == 0 {
 		t.Error("Got: rep.Bills len == 0, Exp: len > 0")
 	}
+}
+
+func makeConfig() pgcln.Config {
+	conf := pgcln.Config{
+		Host:     os.Getenv(pgcln.EnvDBHost),
+		Port:     os.Getenv(pgcln.EnvDBPort),
+		DB:       os.Getenv(pgcln.EnvDBName),
+		User:     os.Getenv(pgcln.EnvDBUser),
+		Password: os.Getenv(pgcln.EnvDBPwd),
+		SSLMode:  "disable",
+	}
+	return conf
 }
 
 // func Test_Client_MakeReports(t *testing.T) {
