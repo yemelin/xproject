@@ -327,6 +327,39 @@ func (c *Client) AddReport(report gcptypes.Report) error {
 	return nil
 }
 
+// AddReportsToAccount adds a set of reports of specified account into db
+func (c *Client) AddReportsToAccount(reports gcptypes.Reports, accountID int) error {
+	accounts, err := c.ListAccounts()
+	if err != nil {
+		log.Printf("%v: list accounts err, %v", pgcLogPref, err)
+		return err
+	}
+
+	accountExists := false
+
+	for _, account := range accounts {
+		if account.ID == accountID {
+			accountExists = true
+			break
+		}
+	}
+
+	if !accountExists {
+		return fmt.Errorf("%v: specified account doesn't exist", pgcLogPref)
+	}
+
+	for _, report := range reports {
+		report.Metadata.AccountID = accountID
+
+		if err := c.AddReport(*report); err != nil {
+			log.Printf("%v: add report err, %v", pgcLogPref, err)
+			return err
+		}
+	}
+
+	return nil
+}
+
 // removeLastBill removes the latest added bill from db
 func (c *Client) removeLastBill() error {
 	if _, err := c.queries["deleteFromBills"].Exec(); err != nil {
