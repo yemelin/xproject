@@ -193,7 +193,7 @@ func (c *Client) GetLastFile() (*gcptypes.FileMetadata, error) {
 	var row gcptypes.FileMetadata
 
 	if err := c.queries["selectLastCsvFile"].QueryRow().Scan(&row.ID, &row.Name,
-		&row.Bucket, &row.Created, &row.AccountID); err != nil {
+		&row.Bucket, &row.Created, &row.AccountID); err != nil && err != sql.ErrNoRows {
 		log.Printf("%v: db scan err, %v", pgcLogPref, err)
 		return nil, err
 	}
