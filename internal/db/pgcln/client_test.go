@@ -377,8 +377,8 @@ func Test_Report(t *testing.T) {
 		Bills:    gcptypes.ServicesBills{&testBill1, &testBill2},
 	}
 
-	if err := pgcln.AddReport(report); err != nil {
-		t.Fatalf("%v: add file err: %v", pgcLogPref, err)
+	if err := pgcln.AddReportsToAccount(gcptypes.Reports{&report}, accounts[len(accounts)-1].ID); err != nil {
+		t.Fatalf("%v: add reports err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastFile()
 	defer pgcln.removeLastBill()
