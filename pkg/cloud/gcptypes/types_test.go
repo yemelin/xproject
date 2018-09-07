@@ -15,7 +15,7 @@ func Test_FilesMetadata_After(t *testing.T) {
 	}
 
 	// 1 element in list
-	files1 := FilesMetadata{FileMetadata{
+	files1 := FilesMetadata{&FileMetadata{
 		Created: time.Date(2018, 7, 1, 0, 0, 0, 0, time.UTC)}}
 
 	res1 := files1.After(
