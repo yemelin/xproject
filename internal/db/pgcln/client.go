@@ -156,6 +156,19 @@ func (c *Client) ListAccounts() (GcpAccounts, error) {
 	return combineAccounts(rows)
 }
 
+// GetLastAccount returns the latest added account from db by max id
+func (c *Client) GetLastAccount() (*GcpAccount, error) {
+	var row GcpAccount
+
+	if err := c.queries["selectLastAccount"].QueryRow().Scan(&row.ID,
+		&row.GcpAccountInfo); err != nil && err != sql.ErrNoRows {
+		log.Printf("%v: db scan err, %v", pgcLogPref, err)
+		return nil, err
+	}
+
+	return &row, nil
+}
+
 // AddAccount adds account into db
 func (c *Client) AddAccount(account GcpAccount) error {
 	if _, err := c.queries["insertIntoAccounts"].Exec(account.GcpAccountInfo); err != nil {
@@ -282,7 +295,7 @@ func (c *Client) GetLastBill() (*gcptypes.ServiceBill, error) {
 
 	if err := c.queries["selectLastBill"].QueryRow().Scan(&row.ID, &row.LineItem,
 		&row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID,
-		&row.Description, &row.FileMetadataID); err != nil {
+		&row.Description, &row.FileMetadataID); err != nil && err != sql.ErrNoRows {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
 	}

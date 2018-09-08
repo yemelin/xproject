@@ -17,6 +17,13 @@ func (c *Client) prepareQueries(ctx context.Context) error {
 		return err
 	}
 
+	c.queries["selectLastAccount"], err = c.idb.PrepareContext(ctx,
+		"SELECT * FROM xproject.accounts ORDER BY id DESC LIMIT 1")
+	if err != nil {
+		log.Printf("%v: prepare err, %v", pgcLogPref, err)
+		return err
+	}
+
 	c.queries["insertIntoAccounts"], err = c.idb.PrepareContext(ctx,
 		"INSERT INTO xproject.accounts VALUES(DEFAULT, $1)")
 	if err != nil {
@@ -39,7 +46,7 @@ func (c *Client) prepareQueries(ctx context.Context) error {
 	}
 
 	c.queries["selectLastCsvFile"], err = c.idb.PrepareContext(ctx,
-		"SELECT * FROM xproject.gcp_csv_files ORDER BY time_created DESC LIMIT 1")
+		"SELECT * FROM xproject.gcp_csv_files ORDER BY time_created DESC, id DESC LIMIT 1")
 	if err != nil {
 		log.Printf("%v: prepare err, %v", pgcLogPref, err)
 		return err

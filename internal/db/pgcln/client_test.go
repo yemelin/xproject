@@ -57,6 +57,15 @@ func Test_Account(t *testing.T) {
 	if strings.Compare(accounts[len(accounts)-1].GcpAccountInfo, "testInfo") != 0 {
 		t.Fatalf("%v: account's info doesn't match the test account", pgcLogPref)
 	}
+
+	account, err := pgcln.GetLastAccount()
+	if err != nil {
+		t.Fatalf("%v: get last account err: %v", pgcLogPref, err)
+	}
+
+	if strings.Compare(account.GcpAccountInfo, "testInfo") != 0 {
+		t.Fatalf("%v: last account's info doesn't match the test account", pgcLogPref)
+	}
 }
 
 // Test_FileMetadata tests adding file's metadata into db, listing and removing it

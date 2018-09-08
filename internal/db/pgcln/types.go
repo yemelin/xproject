@@ -41,6 +41,7 @@ type IClient interface {
 	Close() error
 	Ping() error
 	ListAccounts() (GcpAccounts, error)
+	GetLastAccount() (*GcpAccount, error)
 	AddAccount(GcpAccount) error
 	ListFiles() (gcptypes.FilesMetadata, error)
 	GetLastFile() (*gcptypes.FileMetadata, error)
