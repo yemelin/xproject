@@ -11,7 +11,6 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
-	"log"
 
 	"cloud.google.com/go/storage"
 	"github.com/pavlov-tony/xproject/internal/db/pgcln"
@@ -31,7 +30,7 @@ type Client struct {
 }
 
 // NewClient creates new client for GCP
-func NewClient(ctx context.Context, conf pgcln.Config) (*Client, error) {
+func NewClient(ctx context.Context, pgCln *pgcln.Client) (*Client, error) {
 	c := new(Client)
 	strgCln, err := storage.NewClient(ctx)
 	if err != nil {
@@ -40,13 +39,20 @@ func NewClient(ctx context.Context, conf pgcln.Config) (*Client, error) {
 	c.ctx = ctx
 	c.strgCln = strgCln
 
-	// // init new pg client
-	c.pgCln, err = pgcln.New(ctx, conf)
-	if err != nil {
-		log.Fatalf("in fetch pgcln.New: %v", err)
-	}
+	// init new pg client
+	c.pgCln = pgCln
 
 	return c, nil
+}
+
+// Close client closes all connections
+func (c *Client) Close() error {
+	// closing storage connection
+	err := c.strgCln.Close()
+	if err != nil {
+		return fmt.Errorf("Can not close client: %v", err)
+	}
+	return nil
 }
 
 // BucketsList fetches bucket list from project
@@ -89,6 +95,7 @@ func (c *Client) CsvObjsList(bktName, prefix string) (objs gcptypes.FilesMetadat
 
 // CsvObjectContent fetches data from bucket object by bucket name and object name
 func (c *Client) csvObjectContent(bktName, objName string) ([][]string, error) {
+
 	r, err := c.strgCln.Bucket(bktName).Object(objName).NewReader(c.ctx)
 	if err != nil {
 		return nil, fmt.Errorf("fetch object csv data: %v", err)

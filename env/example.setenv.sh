@@ -12,6 +12,6 @@ export APP_DB_PG_PWD=password
 
 # gcp env
 export GOOGLE_APPLICATION_CREDENTIALS=yourCredPath.json
-export APP_PROJECT_ID=yourProjId
-export APP_PROJECT_BUCKET=yourBucket
-export APP_PROJECT_CSV_OBJECT=yourBillingObjInBucket.csv
+export GCP_APP_PROJECT_ID=yourProjId
+export GCP_APP_PROJECT_BUCKET=yourBucket
+export GCP_APP_PROJECT_CSV_OBJECT=yourBillingObjInBucket.csv
