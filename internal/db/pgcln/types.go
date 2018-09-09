@@ -53,6 +53,7 @@ type IClient interface {
 	GetLastBill() (*gcptypes.ServiceBill, error)
 	AddBill(gcptypes.ServiceBill) error
 	AddReport(gcptypes.Report) error
+	AddReportsToAccount(gcptypes.Reports, int) error
 }
 
 // GcpAccount contains information about GCP user account
