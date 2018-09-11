@@ -118,8 +118,10 @@ func combineBills(rows *sql.Rows) (gcptypes.ServicesBills, error) {
 	var row gcptypes.ServiceBill
 
 	for rows.Next() {
-		if err := rows.Scan(&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost,
-			&row.Currency, &row.ProjectID, &row.Description, &row.FileMetadataID); err != nil {
+		if err := rows.Scan(
+			&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost,
+			&row.Currency, &row.ProjectID, &row.Description, &row.FileMetadataID,
+		); err != nil {
 			log.Printf("%v: db scan err, %v", pgcLogPref, err)
 			return nil, err
 		}
@@ -160,8 +162,9 @@ func (c *Client) ListAccounts() (GcpAccounts, error) {
 func (c *Client) GetLastAccount() (*GcpAccount, error) {
 	var row GcpAccount
 
-	if err := c.queries["selectLastAccount"].QueryRow().Scan(&row.ID,
-		&row.GcpAccountInfo); err != nil && err != sql.ErrNoRows {
+	if err := c.queries["selectLastAccount"].QueryRow().Scan(
+		&row.ID, &row.GcpAccountInfo,
+	); err != nil && err != sql.ErrNoRows {
 		log.Printf("%v: db scan err, %v", pgcLogPref, err)
 		return nil, err
 	}
@@ -205,8 +208,9 @@ func (c *Client) ListFiles() (gcptypes.FilesMetadata, error) {
 func (c *Client) GetLastFile() (*gcptypes.FileMetadata, error) {
 	var row gcptypes.FileMetadata
 
-	if err := c.queries["selectLastCsvFile"].QueryRow().Scan(&row.ID, &row.Name,
-		&row.Bucket, &row.Created, &row.AccountID); err != nil && err != sql.ErrNoRows {
+	if err := c.queries["selectLastCsvFile"].QueryRow().Scan(
+		&row.ID, &row.Name, &row.Bucket, &row.Created, &row.AccountID,
+	); err != nil && err != sql.ErrNoRows {
 		log.Printf("%v: db scan err, %v", pgcLogPref, err)
 		return nil, err
 	}
@@ -216,8 +220,9 @@ func (c *Client) GetLastFile() (*gcptypes.FileMetadata, error) {
 
 // AddFile adds file's metadata into db
 func (c *Client) AddFile(file gcptypes.FileMetadata) error {
-	if _, err := c.queries["insertIntoCsvFiles"].Exec(file.Name, file.Bucket, file.Created,
-		file.AccountID); err != nil {
+	if _, err := c.queries["insertIntoCsvFiles"].Exec(
+		file.Name, file.Bucket, file.Created, file.AccountID,
+	); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
@@ -293,9 +298,10 @@ func (c *Client) ListBillsByProject(project string) (gcptypes.ServicesBills, err
 func (c *Client) GetLastBill() (*gcptypes.ServiceBill, error) {
 	var row gcptypes.ServiceBill
 
-	if err := c.queries["selectLastBill"].QueryRow().Scan(&row.ID, &row.LineItem,
-		&row.StartTime, &row.EndTime, &row.Cost, &row.Currency, &row.ProjectID,
-		&row.Description, &row.FileMetadataID); err != nil && err != sql.ErrNoRows {
+	if err := c.queries["selectLastBill"].QueryRow().Scan(
+		&row.ID, &row.LineItem, &row.StartTime, &row.EndTime, &row.Cost,
+		&row.Currency, &row.ProjectID, &row.Description, &row.FileMetadataID,
+	); err != nil && err != sql.ErrNoRows {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return nil, err
 	}
@@ -305,9 +311,10 @@ func (c *Client) GetLastBill() (*gcptypes.ServiceBill, error) {
 
 // AddBill adds bill into db
 func (c *Client) AddBill(bill gcptypes.ServiceBill) error {
-	if _, err := c.queries["insertIntoBills"].Exec(bill.LineItem, bill.StartTime,
-		bill.EndTime, bill.Cost, bill.Currency, bill.ProjectID, bill.Description,
-		bill.FileMetadataID); err != nil {
+	if _, err := c.queries["insertIntoBills"].Exec(
+		bill.LineItem, bill.StartTime, bill.EndTime, bill.Cost,
+		bill.Currency, bill.ProjectID, bill.Description, bill.FileMetadataID,
+	); err != nil {
 		log.Printf("%v: db query err, %v", pgcLogPref, err)
 		return err
 	}
