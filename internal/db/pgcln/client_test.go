@@ -11,8 +11,8 @@ import (
 	"github.com/pavlov-tony/xproject/pkg/cloud/gcptypes"
 )
 
-// Test_Account tests adding account into db, listing and removing it
-func Test_Account(t *testing.T) {
+// TestGcpAccount tests adding account into db, listing and removing it
+func TestGcpAccount(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
@@ -68,8 +68,8 @@ func Test_Account(t *testing.T) {
 	}
 }
 
-// Test_FileMetadata tests adding file's metadata into db, listing and removing it
-func Test_FileMetadata(t *testing.T) {
+// TestFileMetadata tests adding file's metadata into db, listing and removing it
+func TestFileMetadata(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
@@ -156,8 +156,8 @@ func Test_FileMetadata(t *testing.T) {
 	}
 }
 
-// Test_Bill tests all functions that are related to adding, listing and removing service bills
-func Test_Bill(t *testing.T) {
+// TestServiceBill tests all functions that are related to adding, listing and removing service bills
+func TestServiceBill(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
@@ -303,8 +303,8 @@ func Test_Bill(t *testing.T) {
 	}
 }
 
-// Test_Report tests adding report (file's metadata and bills) into db
-func Test_Report(t *testing.T) {
+// TestReport tests adding report (file's metadata and bills) into db
+func TestReport(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
