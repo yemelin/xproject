@@ -4,9 +4,8 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"strconv"
 
-	"github.com/pavlov-tony/xproject/pkg/csvparse/csvparseutils"
+	"github.com/pavlov-tony/xproject/pkg/csvparse/csvutils"
 	"github.com/pavlov-tony/xproject/pkg/csvparse/errors"
 	"github.com/pavlov-tony/xproject/pkg/csvparse/summary"
 )
@@ -17,23 +16,24 @@ type RawCsv struct {
 }
 
 // FromRows creates RawCsv from [][]string
-func RawCsvFromRows(rows [][]string) *RawCsv {
+func FromRows(rows [][]string) *RawCsv {
 	return &RawCsv{
 		records: rows,
 	}
 }
 
 // FromReader creates RawCsv from io.Reader
-func RawCsvFromReader(in io.Reader) (*RawCsv, error) {
+func FromReader(in io.Reader) (*RawCsv, error) {
 	r := csv.NewReader(in)
 	records, err := r.ReadAll()
 	if err != nil {
 		return nil, fmt.Errorf("can't create RawCsv from io.Reader: %v", err)
 	}
 
-	return &RawCsv{
+	result := &RawCsv{
 		records: records,
-	}, nil
+	}
+	return result, nil
 }
 
 // Rows returns the containing rows of RawCsv
@@ -45,26 +45,20 @@ func (raw *RawCsv) Rows() [][]string {
 func (raw *RawCsv) Row(index int) ([]string, error) {
 	if index < len(raw.records) {
 		return raw.records[index], nil
-	} else {
-		return nil, errors.NewIndexError(index)
 	}
+
+	return nil, errors.NewIndexError(index)
 }
 
 // ColumnIndexByName returns the number of the provided header name
 func (raw *RawCsv) ColumnIndexByName(name string) (int, error) {
 	if len(raw.records) == 0 {
-		return 0, fmt.Errorf("RawCsv is empty.")
+		return 0, fmt.Errorf("empty RawCsv")
 	}
 
 	header := raw.records[0]
 
-	for i, colName := range header {
-		if colName == name {
-			return i, nil
-		}
-	}
-
-	return 0, fmt.Errorf("header with name \"%v\" was not found", name)
+	return csvutils.ColumnIndexByName(header, name)
 }
 
 // FilterByNames returns RawCsv with provided header names only
@@ -85,7 +79,7 @@ func (raw *RawCsv) FilterByNames(columns []string) (*RawCsv, error) {
 func (raw *RawCsv) FilterByIndices(indices []int) (*RawCsv, error) {
 	rows := raw.Rows()
 	if rows == nil {
-		return nil, fmt.Errorf("RawCsv is empty.")
+		return nil, fmt.Errorf("empty RawCsv")
 	}
 
 	final := make([][]string, len(rows))
@@ -96,44 +90,29 @@ func (raw *RawCsv) FilterByIndices(indices []int) (*RawCsv, error) {
 		}
 	}
 
-	return RawCsvFromRows(final), nil
+	return FromRows(final), nil
 }
 
-// GetSummary returns the summary of the RawCsv
-// It's basically grouping by the GroupBy field, and sum the SumBy columns of the RawCsv
-func (rawcsv *RawCsv) GetSummary(cfg *summary.SummaryConfig) (*summary.CsvSummary, error) {
+// Summarize returns a Summary of the RawCsv by the provided config
+func (raw *RawCsv) Summarize(cfg *summary.Config) (*summary.Summary, error) {
 	if cfg.GroupBy == "" || cfg.SumBy == nil {
-		return nil, fmt.Errorf("can't produce CsvSummary: GroupBy and SumBy mustn't be empty")
+		return nil, fmt.Errorf("can't produce CSV Summary: GroupBy and SumBy mustn't be empty")
 	}
 
-	filtered, err := rawcsv.FilterByNames(append([]string{cfg.GroupBy}, cfg.SumBy...))
+	filtered, err := raw.FilterByNames(append([]string{cfg.GroupBy}, cfg.SumBy...))
 	if err != nil {
 		return nil, fmt.Errorf("can't filter by names: %v", err)
 	}
 
-	summ := make(map[string]([]float64))
+	inner := make(map[string]([]float64))
+	sm := summary.NewSummaryFrom(filtered.Rows()[0], &inner)
 
 	for _, row := range filtered.Rows()[1:] {
-		if summ[row[0]] == nil {
-			floats, err := csvparseutils.StringSliceToFloat64(row[1:])
-			if err != nil {
-				return nil, fmt.Errorf("can't parse SumBy to slice of floats: %v", err)
-			}
-			summ[row[0]] = floats
-
-			continue
-		} else {
-			prevRow := summ[row[0]]
-			for j, v := range prevRow {
-				value, err := strconv.ParseFloat(row[j+1], 64)
-				if err != nil {
-					return nil, fmt.Errorf("can't parse '%v' to float64: %v", v, err)
-				}
-				prevRow[j] += value
-			}
-			summ[row[0]] = prevRow
+		err2 := sm.AddStringValues(row)
+		if err2 != nil {
+			return nil, fmt.Errorf("can't add string values: %v", err2)
 		}
 	}
 
-	return summary.New(filtered.Rows()[0], &summ), nil
+	return sm, nil
 }

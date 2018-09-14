@@ -1,43 +1,69 @@
 package summary
 
-// SummaryConfig represents the configuration to
-type SummaryConfig struct {
-	// Header to group by
-	GroupBy string
+import (
+	"fmt"
+	"strconv"
 
-	// Header to sum the values
-	// Values should be convertable to float64
-	SumBy []string
-}
+	"github.com/pavlov-tony/xproject/pkg/utils"
+)
 
-// NewSummaryConfig returns a new SummaryConfig
-func NewSummaryConfig(groupBy string, sumBy []string) *SummaryConfig {
-	return &SummaryConfig{
-		GroupBy: groupBy,
-		SumBy:   sumBy,
-	}
-}
-
-// CsvSummary represents the summary
-type CsvSummary struct {
+// Summary represents the summary
+type Summary struct {
 	headers []string
 	inner   *map[string]([]float64)
 }
 
-// New returns the new CsvSummary
-func New(h []string, m *map[string]([]float64)) *CsvSummary {
-	return &CsvSummary{
+// New returns empty Summary
+func New() *Summary {
+	return &Summary{}
+}
+
+// NewSummaryFrom returns the new Summary
+func NewSummaryFrom(h []string, m *map[string]([]float64)) *Summary {
+	return &Summary{
 		headers: h,
 		inner:   m,
 	}
 }
 
 // Inner returns the key-value map of the CsvSummary
-func (summary CsvSummary) Inner() *map[string]([]float64) {
+func (summary Summary) Inner() *map[string]([]float64) {
 	return summary.inner
 }
 
-// Inner returns the key-value map of the CsvSummary
-func (summary CsvSummary) Headers() []string {
+// Headers returns the key-value map of the CsvSummary
+func (summary Summary) Headers() []string {
 	return summary.headers
+}
+
+// AddStringValues takes new data into the account
+func (summary *Summary) AddStringValues(row []string) error {
+	// If there are no headers, so the first line is headers
+	if summary.headers == nil {
+		summary.headers = row
+		return nil
+	}
+
+	// parse the rest of the data
+	if (*summary.inner)[row[0]] == nil {
+		floats, err := utils.StringSliceToFloat64(row[1:])
+		if err != nil {
+			return fmt.Errorf("can't parse SumBy to slice of floats: %v", err)
+		}
+		(*summary.inner)[row[0]] = floats
+
+		return nil
+	} else {
+		prevRow := (*summary.inner)[row[0]]
+		for j, v := range prevRow {
+			value, err := strconv.ParseFloat(row[j+1], 64)
+			if err != nil {
+				return fmt.Errorf("can't parse '%v' to float64: %v", v, err)
+			}
+			prevRow[j] += value
+		}
+		(*summary.inner)[row[0]] = prevRow
+	}
+
+	return nil
 }
