@@ -160,7 +160,8 @@ func TestFileMetadata(t *testing.T) {
 	}
 }
 
-// TestServiceBill tests all functions that are related to adding, listing and removing service bills
+// TestServiceBill tests all functions that are related to adding,
+// listing and removing service bills
 func TestServiceBill(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
