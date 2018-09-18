@@ -40,7 +40,8 @@ func TestGcpAccount(t *testing.T) {
 		GcpAccountInfo: "testInfo",
 	}
 
-	if err := pgcln.AddAccount(testAccount); err != nil {
+	err = pgcln.AddAccount(testAccount)
+	if err != nil {
 		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastAccount()
@@ -97,7 +98,8 @@ func TestFileMetadata(t *testing.T) {
 		GcpAccountInfo: "testInfo",
 	}
 
-	if err := pgcln.AddAccount(testAccount); err != nil {
+	err = pgcln.AddAccount(testAccount)
+	if err != nil {
 		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastAccount()
@@ -123,12 +125,14 @@ func TestFileMetadata(t *testing.T) {
 		AccountID: accounts[len(accounts)-1].ID,
 	}
 
-	if err := pgcln.AddFile(testFile1); err != nil {
+	err = pgcln.AddFile(testFile1)
+	if err != nil {
 		t.Fatalf("%v: add file err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastFile()
 
-	if err := pgcln.AddFile(testFile2); err != nil {
+	err = pgcln.AddFile(testFile2)
+	if err != nil {
 		t.Fatalf("%v: add file err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastFile()
@@ -185,7 +189,8 @@ func TestServiceBill(t *testing.T) {
 		GcpAccountInfo: "testInfo",
 	}
 
-	if err := pgcln.AddAccount(testAccount); err != nil {
+	err = pgcln.AddAccount(testAccount)
+	if err != nil {
 		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastAccount()
@@ -203,7 +208,8 @@ func TestServiceBill(t *testing.T) {
 		AccountID: accounts[len(accounts)-1].ID,
 	}
 
-	if err := pgcln.AddFile(testFile); err != nil {
+	err = pgcln.AddFile(testFile)
+	if err != nil {
 		t.Fatalf("%v: add file err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastFile()
@@ -237,12 +243,14 @@ func TestServiceBill(t *testing.T) {
 		FileMetadataID: files[len(files)-1].ID,
 	}
 
-	if err := pgcln.AddBill(testBill1); err != nil {
+	err = pgcln.AddBill(testBill1)
+	if err != nil {
 		t.Fatalf("%v: add bill err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastBill()
 
-	if err := pgcln.AddBill(testBill2); err != nil {
+	err = pgcln.AddBill(testBill2)
+	if err != nil {
 		t.Fatalf("%v: add bill err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastBill()
@@ -339,7 +347,8 @@ func TestReport(t *testing.T) {
 		GcpAccountInfo: "testInfo",
 	}
 
-	if err := pgcln.AddAccount(testAccount); err != nil {
+	err = pgcln.AddAccount(testAccount)
+	if err != nil {
 		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastAccount()
@@ -386,8 +395,8 @@ func TestReport(t *testing.T) {
 		Bills:    gcptypes.ServicesBills{&testBill1, &testBill2},
 	}
 
-	if err := pgcln.AddReportsToAccount(gcptypes.Reports{&report},
-		accounts[len(accounts)-1].ID); err != nil {
+	err = pgcln.AddReportsToAccount(gcptypes.Reports{&report}, accounts[len(accounts)-1].ID)
+	if err != nil {
 		t.Fatalf("%v: add reports err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastFile()
