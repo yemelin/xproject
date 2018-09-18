@@ -91,6 +91,11 @@ func combineAccounts(rows *sql.Rows) (GcpAccounts, error) {
 		table = append(table, &row)
 	}
 
+	if err := rows.Err(); err != nil {
+		log.Printf("%v: db rows err, %v", pgcLogPref, err)
+		return nil, err
+	}
+
 	return table, nil
 }
 
@@ -108,6 +113,11 @@ func combineFiles(rows *sql.Rows) (gcptypes.FilesMetadata, error) {
 		}
 
 		table = append(table, &row)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("%v: db rows err, %v", pgcLogPref, err)
+		return nil, err
 	}
 
 	return table, nil
@@ -128,6 +138,11 @@ func combineBills(rows *sql.Rows) (gcptypes.ServicesBills, error) {
 		}
 
 		table = append(table, &row)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("%v: db rows err, %v", pgcLogPref, err)
+		return nil, err
 	}
 
 	return table, nil
