@@ -41,6 +41,7 @@ type IClient interface {
 	Close() error
 	Ping() error
 	ListAccounts() (GcpAccounts, error)
+	GetLastAccount() (*GcpAccount, error)
 	AddAccount(GcpAccount) error
 	ListFiles() (gcptypes.FilesMetadata, error)
 	GetLastFile() (*gcptypes.FileMetadata, error)
@@ -52,6 +53,7 @@ type IClient interface {
 	GetLastBill() (*gcptypes.ServiceBill, error)
 	AddBill(gcptypes.ServiceBill) error
 	AddReport(gcptypes.Report) error
+	AddReportsToAccount(gcptypes.Reports, int) error
 }
 
 // GcpAccount contains information about GCP user account

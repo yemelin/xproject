@@ -11,8 +11,8 @@ import (
 	"github.com/pavlov-tony/xproject/pkg/cloud/gcptypes"
 )
 
-// Test_Account tests adding account into db, listing and removing it
-func Test_Account(t *testing.T) {
+// TestGcpAccount tests adding account into db, listing and removing it
+func TestGcpAccount(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
@@ -40,7 +40,8 @@ func Test_Account(t *testing.T) {
 		GcpAccountInfo: "testInfo",
 	}
 
-	if err := pgcln.AddAccount(testAccount); err != nil {
+	err = pgcln.AddAccount(testAccount)
+	if err != nil {
 		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastAccount()
@@ -57,10 +58,19 @@ func Test_Account(t *testing.T) {
 	if strings.Compare(accounts[len(accounts)-1].GcpAccountInfo, "testInfo") != 0 {
 		t.Fatalf("%v: account's info doesn't match the test account", pgcLogPref)
 	}
+
+	account, err := pgcln.GetLastAccount()
+	if err != nil {
+		t.Fatalf("%v: get last account err: %v", pgcLogPref, err)
+	}
+
+	if strings.Compare(account.GcpAccountInfo, "testInfo") != 0 {
+		t.Fatalf("%v: last account's info doesn't match the test account", pgcLogPref)
+	}
 }
 
-// Test_FileMetadata tests adding file's metadata into db, listing and removing it
-func Test_FileMetadata(t *testing.T) {
+// TestFileMetadata tests adding file's metadata into db, listing and removing it
+func TestFileMetadata(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
@@ -88,7 +98,8 @@ func Test_FileMetadata(t *testing.T) {
 		GcpAccountInfo: "testInfo",
 	}
 
-	if err := pgcln.AddAccount(testAccount); err != nil {
+	err = pgcln.AddAccount(testAccount)
+	if err != nil {
 		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastAccount()
@@ -114,12 +125,14 @@ func Test_FileMetadata(t *testing.T) {
 		AccountID: accounts[len(accounts)-1].ID,
 	}
 
-	if err := pgcln.AddFile(testFile1); err != nil {
+	err = pgcln.AddFile(testFile1)
+	if err != nil {
 		t.Fatalf("%v: add file err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastFile()
 
-	if err := pgcln.AddFile(testFile2); err != nil {
+	err = pgcln.AddFile(testFile2)
+	if err != nil {
 		t.Fatalf("%v: add file err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastFile()
@@ -147,8 +160,9 @@ func Test_FileMetadata(t *testing.T) {
 	}
 }
 
-// Test_Bill tests all functions that are related to adding, listing and removing service bills
-func Test_Bill(t *testing.T) {
+// TestServiceBill tests all functions that are related to adding,
+// listing and removing service bills
+func TestServiceBill(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
@@ -176,7 +190,8 @@ func Test_Bill(t *testing.T) {
 		GcpAccountInfo: "testInfo",
 	}
 
-	if err := pgcln.AddAccount(testAccount); err != nil {
+	err = pgcln.AddAccount(testAccount)
+	if err != nil {
 		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastAccount()
@@ -194,7 +209,8 @@ func Test_Bill(t *testing.T) {
 		AccountID: accounts[len(accounts)-1].ID,
 	}
 
-	if err := pgcln.AddFile(testFile); err != nil {
+	err = pgcln.AddFile(testFile)
+	if err != nil {
 		t.Fatalf("%v: add file err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastFile()
@@ -228,12 +244,14 @@ func Test_Bill(t *testing.T) {
 		FileMetadataID: files[len(files)-1].ID,
 	}
 
-	if err := pgcln.AddBill(testBill1); err != nil {
+	err = pgcln.AddBill(testBill1)
+	if err != nil {
 		t.Fatalf("%v: add bill err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastBill()
 
-	if err := pgcln.AddBill(testBill2); err != nil {
+	err = pgcln.AddBill(testBill2)
+	if err != nil {
 		t.Fatalf("%v: add bill err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastBill()
@@ -294,8 +312,8 @@ func Test_Bill(t *testing.T) {
 	}
 }
 
-// Test_Report tests adding report (file's metadata and bills) into db
-func Test_Report(t *testing.T) {
+// TestReport tests adding report (file's metadata and bills) into db
+func TestReport(t *testing.T) {
 	conf := Config{
 		Host:     os.Getenv(EnvDBHost),
 		Port:     os.Getenv(EnvDBPort),
@@ -330,7 +348,8 @@ func Test_Report(t *testing.T) {
 		GcpAccountInfo: "testInfo",
 	}
 
-	if err := pgcln.AddAccount(testAccount); err != nil {
+	err = pgcln.AddAccount(testAccount)
+	if err != nil {
 		t.Fatalf("%v: add account err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastAccount()
@@ -377,7 +396,8 @@ func Test_Report(t *testing.T) {
 		Bills:    gcptypes.ServicesBills{&testBill1, &testBill2},
 	}
 
-	if err := pgcln.AddReportsToAccount(gcptypes.Reports{&report}, accounts[len(accounts)-1].ID); err != nil {
+	err = pgcln.AddReportsToAccount(gcptypes.Reports{&report}, accounts[len(accounts)-1].ID)
+	if err != nil {
 		t.Fatalf("%v: add reports err: %v", pgcLogPref, err)
 	}
 	defer pgcln.removeLastFile()
