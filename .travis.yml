@@ -1,0 +1,16 @@
+sudo: required
+
+language: go
+
+services: 
+  - docker
+
+install:
+- make install
+
+before_script:
+- make deps
+
+script:
+- make lint
+- make unit-test
