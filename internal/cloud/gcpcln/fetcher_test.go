@@ -1,3 +1,5 @@
+// +build integration
+
 package gcpcln
 
 import (
@@ -6,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pavlov-tony/xproject/internal/db/pgcln"
+	"github.com/yemelin/xproject/internal/db/pgcln"
 )
 
 func Test_Client_Fetch(t *testing.T) {

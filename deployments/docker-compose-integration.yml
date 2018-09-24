@@ -5,7 +5,7 @@ services:
             dockerfile: Base.Dockerfile
             context: ../build/package/
         image: ${APP_NAME:-xproject}:base
-        command: sh -c "go test -v ./... -tags integration"
+        command: sh -c "go test -v ./... -tags integration-db"
         volumes:
             - ../:/go/src/github.com/yemelin/xproject
         env_file:

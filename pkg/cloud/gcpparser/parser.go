@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pavlov-tony/xproject/pkg/cloud/gcptypes"
+	"github.com/yemelin/xproject/pkg/cloud/gcptypes"
 )
 
 // necessary columns

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/pavlov-tony/xproject/pkg/csvparse/csvutils"
-	"github.com/pavlov-tony/xproject/pkg/csvparse/errors"
-	"github.com/pavlov-tony/xproject/pkg/csvparse/summary"
+	"github.com/yemelin/xproject/pkg/csvparse/csvutils"
+	"github.com/yemelin/xproject/pkg/csvparse/errors"
+	"github.com/yemelin/xproject/pkg/csvparse/summary"
 )
 
 // RawCsv represents the matrix of strings parsed from CSV

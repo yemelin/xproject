@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pavlov-tony/xproject/pkg/csvparse/summary"
-	"github.com/pavlov-tony/xproject/pkg/utils"
+	"github.com/yemelin/xproject/pkg/csvparse/summary"
+	"github.com/yemelin/xproject/pkg/utils"
 )
 
 func TestRawCsvFromReader(t *testing.T) {

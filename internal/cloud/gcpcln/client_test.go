@@ -1,3 +1,5 @@
+// +build integration
+
 package gcpcln
 
 import (
@@ -6,8 +8,8 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
-	"github.com/pavlov-tony/xproject/internal/db/pgcln"
-	"github.com/pavlov-tony/xproject/pkg/cloud/gcptypes"
+	"github.com/yemelin/xproject/internal/db/pgcln"
+	"github.com/yemelin/xproject/pkg/cloud/gcptypes"
 )
 
 func Test_Client_NewClient(t *testing.T) {
