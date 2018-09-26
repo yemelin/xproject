@@ -1,4 +1,4 @@
-// +build integration
+// +build cloud
 
 package gcpcln
 
@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/yemelin/xproject/internal/db/pgcln"
 	"github.com/yemelin/xproject/pkg/cloud/gcptypes"
+	"google.golang.org/appengine/aetest"
 )
 
 func Test_Client_NewClient(t *testing.T) {
@@ -19,6 +20,11 @@ func Test_Client_NewClient(t *testing.T) {
 	if err != nil {
 		t.Errorf("Can not init new pg client: %v", err)
 	}
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Errorf("cannot initialize aetest context: %v", err)
+	}
+	defer done()
 	// creting new client
 	cln, err := NewClient(ctx, pgCln)
 	if err != nil {

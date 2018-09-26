@@ -1,4 +1,4 @@
-// +build integration-db
+// +build integration
 
 package pgcln
 

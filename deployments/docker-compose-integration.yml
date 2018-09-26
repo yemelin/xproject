@@ -5,7 +5,7 @@ services:
             dockerfile: Base.Dockerfile
             context: ../build/package/
         image: ${APP_NAME:-xproject}:base
-        command: sh -c "go test -v ./... -tags integration-db"
+        command: sh -c "go test -v ./... -tags integration"
         volumes:
             - ../:/go/src/github.com/yemelin/xproject
         env_file:
@@ -25,13 +25,17 @@ services:
             dockerfile: PG.Dockerfile
             context: ../build/package/
         volumes:
-            - ../scripts/initdb/init_test_db.sh:/docker-entrypoint-initdb.d/init_test_db.sh
+            - ../scripts/initdb/init_tables.sql:/docker-entrypoint-initdb.d/init_tables.sql
         environment:
             - POSTGRES_USER=xproject-test
             - POSTGRES_PASSWORD=xproject-test
         ports:
             - '5432:5432'
         container_name: ${APP_NAME:-xproject}-postgres-test
+        healthcheck:
+            test: pg_ready
+            interval: 0.5s
+            retries: 5
         networks: 
             - default-network
 
