@@ -14,3 +14,4 @@ before_script:
 script:
 #- make lint
 - make integration-test
+- bash scripts/notify_tg.sh
